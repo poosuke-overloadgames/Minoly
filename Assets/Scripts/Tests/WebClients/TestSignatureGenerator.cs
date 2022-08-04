@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using Minoly;
+using Minoly.Types;
 using NUnit.Framework;
 
 namespace Tests
@@ -21,6 +24,21 @@ namespace Tests
 		{
 			var generator = new SignatureGenerator();
 			Assert.That(generator.Generate(src, clientKey), Is.EqualTo(expected));
+		}
+		
+		[Test]
+		public void RequestParameterからシグネチャ生成()
+		{
+			var generator = new SignatureGenerator();
+			var param = new RequestParameter
+			{
+				Method = RequestMethod.Get,
+				ClassName = "TestClass",
+				ApplicationKey = "6145f91061916580c742f806bab67649d10f45920246ff459404c46f00ff3e56",
+				Timestamp = new Timestamp(new DateTime(2013, 12, 2, 2, 44, 35, 452)),
+				GetQueries = new List<GetQuery> { new GetQuery("testKey", "testValue") }
+			};
+			Assert.That(generator.Generate(param, ClientKey), Is.EqualTo(Signature));
 		}
 	}
 }
