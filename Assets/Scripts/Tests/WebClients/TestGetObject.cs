@@ -29,14 +29,18 @@ namespace Tests
 		}
 
 		[UnityTest]
-		public IEnumerator テスト()
+		public IEnumerator 正常系()
 		{
 			var applicationKey = EditorUserSettings.GetConfigValue("MinolyApplicationKey");
 			var clientKey = EditorUserSettings.GetConfigValue("MinolyClientKey");
 			var objectId = EditorUserSettings.GetConfigValue("MinolyObjectId");
 			var objectGetter = new ObjectGetter(applicationKey, clientKey);
 			yield return objectGetter.Fetch(ClassName, objectId);
-			var testClass = JsonUtility.FromJson<TestClass>(objectGetter.Response);
+			var result = objectGetter.GetResult();
+			Assert.That(result.Type, Is.EqualTo(RequestResultType.Success));
+			Assert.That(result.HttpStatusCode, Is.EqualTo(200));
+			Assert.That(result.ErrorResponse, Is.Null);
+			var testClass = JsonUtility.FromJson<TestClass>(result.Body);
 			Assert.That(testClass.userName, Is.EqualTo(UserName));
 			Assert.That(testClass.score, Is.EqualTo(Score));
 		}
