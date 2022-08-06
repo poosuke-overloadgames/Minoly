@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using Minoly;
 using NUnit.Framework;
 using UnityEditor;
@@ -58,5 +59,22 @@ namespace Tests
 			Assert.That(result.ErrorResponse.code, Is.EqualTo("E403002"));
 			Assert.That(result.ErrorResponse.error, Is.EqualTo("Unauthorized operations for signature."));
 		}
+
+		[UnityTest]
+		public IEnumerator UniTaskによるFetch() => UniTask.ToCoroutine(async () =>
+		{
+			var applicationKey = EditorUserSettings.GetConfigValue("MinolyApplicationKey");
+			var clientKey = EditorUserSettings.GetConfigValue("MinolyClientKey");
+			var objectId = EditorUserSettings.GetConfigValue("MinolyObjectId");
+			var objectGetter = new ObjectGetter(applicationKey, clientKey);
+			var result = await objectGetter.FetchTask(ClassName, objectId);
+			Assert.That(result.Type, Is.EqualTo(RequestResultType.Success));
+			Assert.That(result.HttpStatusCode, Is.EqualTo(200));
+			Assert.That(result.ErrorResponse, Is.Null);
+			var testClass = JsonUtility.FromJson<TestClass>(result.Body);
+			Assert.That(testClass.userName, Is.EqualTo(UserName));
+			Assert.That(testClass.score, Is.EqualTo(Score));
+
+		});
 	}
 }

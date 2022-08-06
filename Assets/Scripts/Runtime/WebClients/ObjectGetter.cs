@@ -2,6 +2,11 @@ using System;
 using UnityEngine;
 using UnityEngine.Networking;
 
+#if VALID_UNITASK
+using Cysharp.Threading.Tasks;
+#endif
+
+
 namespace Minoly
 {
 	public class ObjectGetter
@@ -45,6 +50,15 @@ namespace Minoly
 			_request.SetRequestHeader("X-NCMB-Timestamp", current.AsString);
 			return _request.SendWebRequest();
 		}
+
+#if VALID_UNITASK
+		public async UniTask<RequestResult> FetchTask(string className, string objectId)
+		{
+			await FetchAsync(className, objectId);
+			return GetResult();
+		}
+#endif
+		
 		
 		public RequestResult GetResult()
 		{
