@@ -7,6 +7,7 @@ namespace Minoly
 		NetworkError,
 		ProtocolError,
 		DataError,
+		Aborted,
 		Unknown,
 	}
 }

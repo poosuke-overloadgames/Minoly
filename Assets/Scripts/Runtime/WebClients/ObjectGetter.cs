@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 #if VALID_UNITASK
+using System.Threading;
 using Cysharp.Threading.Tasks;
 #endif
 
@@ -52,9 +53,15 @@ namespace Minoly
 		}
 
 #if VALID_UNITASK
-		public async UniTask<RequestResult> FetchTask(string className, string objectId)
+		public async UniTask<RequestResult> FetchTask(
+			string className,
+			string objectId, 
+			IProgress<float> progress = null,
+			PlayerLoopTiming timing = PlayerLoopTiming.Update,
+			CancellationToken cancellationToken = default
+			)
 		{
-			await FetchAsync(className, objectId);
+			await FetchAsync(className, objectId).ToUniTask(progress, timing, cancellationToken);
 			return GetResult();
 		}
 #endif
@@ -65,6 +72,7 @@ namespace Minoly
 			if (_result.Type != RequestResultType.Unknown && _result.Type != RequestResultType.InProgress) return _result;
 			if (_request == null) return _result = RequestResult.CreateUnknown();
 			if (_request.result == UnityWebRequest.Result.InProgress) return _result = RequestResult.CreateInProgress();
+			if (_request.error == "Request aborted") return _result = RequestResult.CreateAborted();
 			var resultText = _request.downloadHandler.text;
 			var error = _request.result == UnityWebRequest.Result.ProtocolError
 				? JsonUtility.FromJson<ErrorResponse>(resultText)

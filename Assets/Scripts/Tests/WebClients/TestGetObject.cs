@@ -1,11 +1,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using Minoly;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.TestTools;
 
 namespace Tests
@@ -75,6 +77,31 @@ namespace Tests
 			Assert.That(testClass.userName, Is.EqualTo(UserName));
 			Assert.That(testClass.score, Is.EqualTo(Score));
 
+		});
+
+		[UnityTest]
+		public IEnumerator UniTaskによるFetchをキャンセル() => UniTask.ToCoroutine(async () =>
+		{
+			var applicationKey = EditorUserSettings.GetConfigValue("MinolyApplicationKey");
+			var clientKey = EditorUserSettings.GetConfigValue("MinolyClientKey");
+			var objectId = EditorUserSettings.GetConfigValue("MinolyObjectId");
+			var cts = new CancellationTokenSource();
+			var objectGetter = new ObjectGetter(applicationKey, clientKey);
+			var task = objectGetter.FetchTask(ClassName, objectId, null, PlayerLoopTiming.Update, cts.Token);
+			cts.Cancel();
+			try
+			{
+				await task;
+			}
+			catch(OperationCanceledException)
+			{
+				//なぜかこの時点ではInProgressもある。
+				//OperationCanceledExceptionを投げるタイミングとキャンセル処理が終わるタイミングがリンクしてないっぽい
+				Assert.That(objectGetter.GetResult().Type, Is.EqualTo(RequestResultType.InProgress).Or.EqualTo(RequestResultType.Aborted));
+				await UniTask.Yield();
+			}
+			var result = objectGetter.GetResult();
+			Assert.That(result.Type, Is.EqualTo(RequestResultType.Aborted));
 		});
 	}
 }

@@ -17,5 +17,6 @@ namespace Minoly
 
 		public static RequestResult CreateUnknown() => new RequestResult(RequestResultType.Unknown, 0, null, "");
 		public static RequestResult CreateInProgress() => new RequestResult(RequestResultType.InProgress, 0, null, "");
+		public static RequestResult CreateAborted() => new RequestResult(RequestResultType.Aborted, 0, null, "");
 	}
 }
