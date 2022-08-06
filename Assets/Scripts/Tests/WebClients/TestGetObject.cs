@@ -44,5 +44,20 @@ namespace Tests
 			Assert.That(testClass.userName, Is.EqualTo(UserName));
 			Assert.That(testClass.score, Is.EqualTo(Score));
 		}
+
+		[UnityTest]
+		public IEnumerator 異常系()
+		{
+			var applicationKey = EditorUserSettings.GetConfigValue("MinolyApplicationKey");
+			var clientKey = "Detarame";
+			var objectId = EditorUserSettings.GetConfigValue("MinolyObjectId");
+			var objectGetter = new ObjectGetter(applicationKey, clientKey);
+			yield return objectGetter.Fetch(ClassName, objectId);
+			var result = objectGetter.GetResult();
+			Assert.That(result.Type, Is.EqualTo(RequestResultType.ProtocolError));
+			Assert.That(result.HttpStatusCode, Is.EqualTo(403));
+			Assert.That(result.ErrorResponse.code, Is.EqualTo("E403002"));
+			Assert.That(result.ErrorResponse.error, Is.EqualTo("Unauthorized operations for signature."));
+		}
 	}
 }
