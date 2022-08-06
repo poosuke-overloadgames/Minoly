@@ -32,7 +32,7 @@ namespace Minoly
 			_result = RequestResult.CreateUnknown();
 		}
 
-		public UnityWebRequestAsyncOperation Fetch(string className, string objectId)
+		public UnityWebRequestAsyncOperation FetchAsync(string className, string objectId)
 		{
 			_result = RequestResult.CreateUnknown();
 			var current = new Timestamp(_current.Get());

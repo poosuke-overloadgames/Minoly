@@ -34,7 +34,7 @@ namespace Tests
 			var clientKey = EditorUserSettings.GetConfigValue("MinolyClientKey");
 			var objectId = EditorUserSettings.GetConfigValue("MinolyObjectId");
 			var objectGetter = new ObjectGetter(applicationKey, clientKey);
-			yield return objectGetter.Fetch(ClassName, objectId);
+			yield return objectGetter.FetchAsync(ClassName, objectId);
 			var result = objectGetter.GetResult();
 			Assert.That(result.Type, Is.EqualTo(RequestResultType.Success));
 			Assert.That(result.HttpStatusCode, Is.EqualTo(200));
@@ -51,7 +51,7 @@ namespace Tests
 			var clientKey = "Detarame";
 			var objectId = EditorUserSettings.GetConfigValue("MinolyObjectId");
 			var objectGetter = new ObjectGetter(applicationKey, clientKey);
-			yield return objectGetter.Fetch(ClassName, objectId);
+			yield return objectGetter.FetchAsync(ClassName, objectId);
 			var result = objectGetter.GetResult();
 			Assert.That(result.Type, Is.EqualTo(RequestResultType.ProtocolError));
 			Assert.That(result.HttpStatusCode, Is.EqualTo(403));
