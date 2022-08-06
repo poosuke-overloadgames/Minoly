@@ -1,23 +1,28 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using Minoly.Types;
+using UnityEngine;
 
 namespace Minoly
 {
 	public class SignatureGenerator
 	{
 		private readonly StringBuilder _builder = new StringBuilder();
-		private string GetSource(RequestParameter parameter)
+
+		private string GetSource(RequestMethod method, Uri url, string applicationKey, IReadOnlyList<GetQuery> queries, Timestamp timestamp)
 		{
-			_builder.AppendFormat("{0}\n", parameter.Method == RequestMethod.Get ? "GET" : "");
+			_builder.Clear();
+			_builder.AppendFormat("{0}\n", method == RequestMethod.Get ? "GET" : "");
 			_builder.Append("mbaas.api.nifcloud.com\n");
-			_builder.AppendFormat("/2013-09-01/classes/{0}\n", parameter.ClassName);
+			_builder.AppendFormat("{0}\n", url.AbsolutePath);
 			_builder.Append("SignatureMethod=HmacSHA256&SignatureVersion=2");
-			_builder.AppendFormat("&X-NCMB-Application-Key={0}", parameter.ApplicationKey);
-			_builder.AppendFormat("&X-NCMB-Timestamp={0}", parameter.Timestamp.AsString);
-			if (parameter.GetQueries.Count == 0) return _builder.ToString();
-			var q = string.Join(",", parameter.GetQueries.Select(q => $"\"{q.Key}\":\"{q.Value}\""));
+			_builder.AppendFormat("&X-NCMB-Application-Key={0}", applicationKey);
+			_builder.AppendFormat("&X-NCMB-Timestamp={0}", timestamp.AsString);
+			if (queries.Count == 0) return _builder.ToString();
+			var q = string.Join(",", queries.Select(q => $"\"{q.Key}\":\"{q.Value}\""));
 			_builder.AppendFormat("&where={0}", Uri.EscapeUriString($"{{{q}}}").Replace(":", "%3A"));
 			return _builder.ToString();
 		}
@@ -32,9 +37,9 @@ namespace Minoly
 			return Convert.ToBase64String(hash);
 		}
 
-		public string Generate(RequestParameter parameter, string clientKey)
+		public string Generate(RequestMethod method, Uri url, string applicationKey, string clientKey, IReadOnlyList<GetQuery> queries, Timestamp timestamp)
 		{
-			var src = GetSource(parameter);
+			var src = GetSource(method, url, applicationKey, queries, timestamp);
 			return Generate(src, clientKey);
 		}
 	}
