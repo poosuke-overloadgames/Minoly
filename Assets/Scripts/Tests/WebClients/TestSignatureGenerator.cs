@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Minoly;
-using Minoly.Types;
 using NUnit.Framework;
 
 namespace Tests

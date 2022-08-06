@@ -1,6 +1,6 @@
 using System;
 
-namespace Minoly.Types
+namespace Minoly
 {
 	public readonly struct Timestamp
 	{

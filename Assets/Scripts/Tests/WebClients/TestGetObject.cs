@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Minoly;
-using Minoly.Types;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;

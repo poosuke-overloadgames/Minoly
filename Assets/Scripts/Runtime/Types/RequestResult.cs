@@ -1,4 +1,4 @@
-namespace Minoly.Types
+namespace Minoly
 {
 	public struct RequestResult
 	{

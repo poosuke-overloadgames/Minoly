@@ -1,6 +1,4 @@
 using System;
-using System.Collections;
-using Minoly.Types;
 using UnityEngine;
 using UnityEngine.Networking;
 

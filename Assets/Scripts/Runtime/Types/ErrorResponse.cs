@@ -1,6 +1,6 @@
 using System;
 
-namespace Minoly.Types
+namespace Minoly
 {
 	[Serializable]
 	public class ErrorResponse
