@@ -44,6 +44,9 @@ namespace Tests
 			var testClass = JsonUtility.FromJson<TestClass>(getResult.Body);
 			Assert.That(testClass.userName, Is.EqualTo(UserName));
 			Assert.That(testClass.score, Is.EqualTo(Score));
+			
+			var objectDeleter = new ObjectDeleter(applicationKey, clientKey);
+			yield return objectDeleter.DeleteAsync(ClassName, postResult.ObjectId);
 		}
 
 		[UnityTest]
