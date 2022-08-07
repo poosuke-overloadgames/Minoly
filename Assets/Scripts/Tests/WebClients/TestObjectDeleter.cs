@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
+using Cysharp.Threading.Tasks;
 using Minoly;
+using Minoly.UniTask;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -50,5 +52,19 @@ namespace Tests
 			Assert.That(result.ErrorResponse.code, Is.EqualTo("E404001"));
 			Assert.That(result.ErrorResponse.error, Is.EqualTo("No data available."));
 		}
+		
+		[UnityTest]
+		public IEnumerator UniTaskによるDelete() => UniTask.ToCoroutine(async () =>
+		{
+			var applicationKey = EditorUserSettings.GetConfigValue("MinolyApplicationKey");
+			var clientKey = EditorUserSettings.GetConfigValue("MinolyClientKey");
+			var objectPostman = new ObjectPostman(applicationKey, clientKey);
+			var objectDeleter = new ObjectDeleter(applicationKey, clientKey);
+			var postResult = await objectPostman.PostTask(ClassName, ContentInJson);
+			var deleteResult = await objectDeleter.DeleteTask(ClassName, postResult.ObjectId);
+			Assert.That(deleteResult.Type, Is.EqualTo(RequestResultType.Success));
+			Assert.That(deleteResult.HttpStatusCode, Is.EqualTo(200));
+		});
+
 	}
 }
