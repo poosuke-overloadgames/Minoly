@@ -18,18 +18,7 @@ namespace Minoly
 		private readonly string _clientKey;
 		private UnityWebRequest _request;
 		private ObjectGetResult _result;
-
-		private RequestResultType ToRequestResultType(UnityWebRequest.Result result) => result switch
-		{
-			UnityWebRequest.Result.InProgress => RequestResultType.InProgress,
-			UnityWebRequest.Result.Success => RequestResultType.Success,
-			UnityWebRequest.Result.ConnectionError => RequestResultType.NetworkError,
-			UnityWebRequest.Result.ProtocolError => RequestResultType.ProtocolError,
-			UnityWebRequest.Result.DataProcessingError => RequestResultType.DataError,
-			_ => RequestResultType.Unknown
-		};
 		
-
 		public ObjectGetter(string applicationKey, string clientKey, ICurrentDateTime current = null)
 		{
 			_applicationKey = applicationKey;
@@ -77,7 +66,7 @@ namespace Minoly
 			var error = _request.result == UnityWebRequest.Result.ProtocolError
 				? JsonUtility.FromJson<ErrorResponse>(resultText)
 				: null;
-			var resultType = ToRequestResultType(_request.result);
+			var resultType = _request.result.ToRequestResultType();
 			return _result = new ObjectGetResult(resultType, (int)_request.responseCode, error, resultText);
 		}
 

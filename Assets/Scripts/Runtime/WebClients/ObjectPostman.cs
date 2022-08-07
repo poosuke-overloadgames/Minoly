@@ -21,17 +21,6 @@ namespace Minoly
 		private UnityWebRequest _request;
 		private ObjectPostResult _result;
 
-		private RequestResultType ToRequestResultType(UnityWebRequest.Result result) => result switch
-		{
-			UnityWebRequest.Result.InProgress => RequestResultType.InProgress,
-			UnityWebRequest.Result.Success => RequestResultType.Success,
-			UnityWebRequest.Result.ConnectionError => RequestResultType.NetworkError,
-			UnityWebRequest.Result.ProtocolError => RequestResultType.ProtocolError,
-			UnityWebRequest.Result.DataProcessingError => RequestResultType.DataError,
-			_ => RequestResultType.Unknown
-		};
-		
-
 		public ObjectPostman(string applicationKey, string clientKey, ICurrentDateTime current = null)
 		{
 			_applicationKey = applicationKey;
@@ -67,7 +56,7 @@ namespace Minoly
 			var error = _request.result == UnityWebRequest.Result.ProtocolError
 				? JsonUtility.FromJson<ErrorResponse>(resultText)
 				: null;
-			var resultType = ToRequestResultType(_request.result);
+			var resultType = _request.result.ToRequestResultType();
 			var body = null != error ? null : JsonUtility.FromJson<ResultBody>(resultText);
 			return _result = new ObjectPostResult(
 				resultType,
