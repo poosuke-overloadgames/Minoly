@@ -1,13 +1,12 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Minoly;
+using Minoly.UniTask;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.TestTools;
 
 namespace Tests
@@ -18,17 +17,6 @@ namespace Tests
 		private const string ClassName = "TestClass";
 		private const string UserName = "aaa";
 		private const int Score = 100;
-
-		[Serializable]
-		private class TestClass
-		{
-			public string objectId;
-			public string createDate; //UnityEngine.JsonUtilityではタイムスタンプをDateTimeに変換してくれない
-			public string updateDate;
-			//public string acl;
-			public string userName;
-			public int score;
-		}
 
 		[UnityTest]
 		public IEnumerator 正常系()

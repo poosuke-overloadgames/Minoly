@@ -15,18 +15,7 @@ namespace Tests
 		private const string UserName = "bbb";
 		private const int Score = 200;
 		private const string ContentInJson = "{\"userName\": \"bbb\", \"score\": \"200\"}";
-
-		[Serializable]
-		private class TestClass
-		{
-			public string objectId;
-			public string createDate; //UnityEngine.JsonUtilityではタイムスタンプをDateTimeに変換してくれない
-			public string updateDate;
-			//public string acl;
-			public string userName;
-			public int score;
-		}
-
+		
 		
 		[UnityTest]
 		public IEnumerator 正常系()

@@ -2,11 +2,6 @@ using System;
 using UnityEngine;
 using UnityEngine.Networking;
 
-#if VALID_UNITASK
-using System.Threading;
-using Cysharp.Threading.Tasks;
-#endif
-
 
 namespace Minoly
 {
@@ -40,21 +35,6 @@ namespace Minoly
 			_request.SetRequestHeader("X-NCMB-Timestamp", current.AsString);
 			return _request.SendWebRequest();
 		}
-
-#if VALID_UNITASK
-		public async UniTask<ObjectGetResult> FetchTask(
-			string className,
-			string objectId, 
-			IProgress<float> progress = null,
-			PlayerLoopTiming timing = PlayerLoopTiming.Update,
-			CancellationToken cancellationToken = default
-			)
-		{
-			await FetchAsync(className, objectId).ToUniTask(progress, timing, cancellationToken);
-			return GetResult();
-		}
-#endif
-		
 		
 		public ObjectGetResult GetResult()
 		{
