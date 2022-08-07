@@ -5,7 +5,8 @@ namespace Minoly
 	public enum RequestMethod
 	{
 		Get,
-		Post
+		Post,
+		Delete
 	}
 
 	public static class RequestMethodExtension
@@ -14,6 +15,7 @@ namespace Minoly
 		{
 			RequestMethod.Get => "GET",
 			RequestMethod.Post => "POST",
+			RequestMethod.Delete => "DELETE",
 			_ => throw new NotImplementedException()
 		};
 	}
