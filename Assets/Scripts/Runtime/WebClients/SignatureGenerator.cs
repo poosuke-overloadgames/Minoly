@@ -10,10 +10,12 @@ namespace Minoly
 	{
 		private readonly StringBuilder _builder = new StringBuilder();
 
+		
+		
 		private string GetSource(RequestMethod method, Uri url, string applicationKey, IReadOnlyList<GetQuery> queries, Timestamp timestamp)
 		{
 			_builder.Clear();
-			_builder.AppendFormat("{0}\n", method == RequestMethod.Get ? "GET" : "");
+			_builder.AppendFormat("{0}\n", method.ToHttpString());
 			_builder.Append("mbaas.api.nifcloud.com\n");
 			_builder.AppendFormat("{0}\n", url.AbsolutePath);
 			_builder.Append("SignatureMethod=HmacSHA256&SignatureVersion=2");
