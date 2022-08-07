@@ -43,5 +43,21 @@ namespace Tests
 			yield return objectUpserter.UpdateAsync(ClassName, objectId, ContentInJsonOrg);
 		}
 
+		[UnityTest]
+		public IEnumerator 異常系()
+		{
+			var applicationKey = EditorUserSettings.GetConfigValue("MinolyApplicationKey");
+			var clientKey = EditorUserSettings.GetConfigValue("MinolyClientKey");
+			var objectId = "Detarame";
+			var objectGetter = new ObjectGetter(applicationKey, clientKey);
+			var objectUpserter = new ObjectUpdater(applicationKey, clientKey);
+
+			yield return objectUpserter.UpdateAsync(ClassName, objectId, ContentInJson);
+			var upsertResult = objectUpserter.GetResult();
+			Assert.That(upsertResult.Type, Is.EqualTo(RequestResultType.ProtocolError));
+			Assert.That(upsertResult.HttpStatusCode, Is.EqualTo(404));
+			Assert.That(upsertResult.ErrorResponse.code, Is.EqualTo("E404001"));
+			Assert.That(upsertResult.ErrorResponse.error, Is.EqualTo("No data available."));
+		}
 	}
 }
