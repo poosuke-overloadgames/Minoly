@@ -58,13 +58,10 @@ namespace Minoly
 				: null;
 			var resultType = _request.result.ToRequestResultType();
 			var body = null != error ? null : JsonUtility.FromJson<ResultBody>(resultText);
-			return _result = new ObjectPostResult(
-				resultType,
-				(int)_request.responseCode,
-				error,
-				body?.objectId ?? "",
-				DateTime.TryParse(body?.createDate ?? "", out var d) ? d : new DateTime()
-			);
+			var statusCode = (int)_request.responseCode;
+			var objectId = body?.objectId ?? "";
+			var createDate = DateTime.TryParse(body?.createDate ?? "", out var d) ? d : new DateTime();
+			return _result = new ObjectPostResult(resultType, statusCode, error, objectId, createDate);
 		}
 
 	}
