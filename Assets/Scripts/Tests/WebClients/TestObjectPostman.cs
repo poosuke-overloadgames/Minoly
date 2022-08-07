@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
+using Cysharp.Threading.Tasks;
 using Minoly;
+using Minoly.UniTask;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -59,5 +61,19 @@ namespace Tests
 			Assert.That(postResult.ErrorResponse.code, Is.EqualTo("E404005"));
 			Assert.That(postResult.ErrorResponse.error, Is.EqualTo("No such application."));
 		}
+		
+		[UnityTest]
+		public IEnumerator UniTaskによるPost() => UniTask.ToCoroutine(async () =>
+		{
+			var applicationKey = EditorUserSettings.GetConfigValue("MinolyApplicationKey");
+			var clientKey = EditorUserSettings.GetConfigValue("MinolyClientKey");
+			var objectPostman = new ObjectPostman(applicationKey, clientKey);
+			var objectGetter = new ObjectGetter(applicationKey, clientKey);
+			var postResult = await objectPostman.PostTask(ClassName, ContentInJson);
+			var getResult = await objectGetter.FetchTask(ClassName, postResult.ObjectId);
+			var testClass = JsonUtility.FromJson<TestClass>(getResult.Body);
+			Assert.That(testClass.userName, Is.EqualTo(UserName));
+			Assert.That(testClass.score, Is.EqualTo(Score));
+		});
 	}
 }
