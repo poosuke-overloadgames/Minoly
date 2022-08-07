@@ -6,6 +6,7 @@ namespace Minoly
 	{
 		Get,
 		Post,
+		Put,
 		Delete
 	}
 
@@ -15,6 +16,7 @@ namespace Minoly
 		{
 			RequestMethod.Get => "GET",
 			RequestMethod.Post => "POST",
+			RequestMethod.Put => "PUT",
 			RequestMethod.Delete => "DELETE",
 			_ => throw new NotImplementedException()
 		};
