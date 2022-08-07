@@ -32,6 +32,19 @@ namespace Minoly.UniTask
 			await objectPostman.PostAsync(className, contentInJson).ToUniTask(progress, timing, cancellationToken);
 			return objectPostman.GetResult();
 		}
+		public static async UniTask<ObjectUpdateResult> UpdateTask(
+			this ObjectUpdater objectUpdater,
+			string className,
+			string objectId,
+			string contentInJson,
+			IProgress<float> progress = null,
+			PlayerLoopTiming timing = PlayerLoopTiming.Update,
+			CancellationToken cancellationToken = default
+		)
+		{
+			await objectUpdater.UpdateAsync(className, objectId, contentInJson).ToUniTask(progress, timing, cancellationToken);
+			return objectUpdater.GetResult();
+		}
 		public static async UniTask<ObjectDeleteResult> DeleteTask(
 			this ObjectDeleter objectDeleter,
 			string className,

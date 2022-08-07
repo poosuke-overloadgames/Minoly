@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
+using Cysharp.Threading.Tasks;
 using Minoly;
+using Minoly.UniTask;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -59,5 +61,24 @@ namespace Tests
 			Assert.That(upsertResult.ErrorResponse.code, Is.EqualTo("E404001"));
 			Assert.That(upsertResult.ErrorResponse.error, Is.EqualTo("No data available."));
 		}
+		
+		[UnityTest]
+		public IEnumerator UniTaskによるUpdate() => UniTask.ToCoroutine(async () =>
+		{
+			var applicationKey = EditorUserSettings.GetConfigValue("MinolyApplicationKey");
+			var clientKey = EditorUserSettings.GetConfigValue("MinolyClientKey");
+			var objectId = EditorUserSettings.GetConfigValue("MinolyObjectId");
+			var objectUpdater = new ObjectUpdater(applicationKey, clientKey);
+			var objectGetter = new ObjectGetter(applicationKey, clientKey);
+			var updateResult = await objectUpdater.UpdateTask(ClassName, objectId, ContentInJson);
+			var getResult = await objectGetter.FetchTask(ClassName, objectId);
+			var testClass = JsonUtility.FromJson<TestClass>(getResult.Body);
+			Assert.That(testClass.userName, Is.EqualTo(UserName));
+			Assert.That(testClass.score, Is.EqualTo(Score));
+			
+			var objectDeleter = new ObjectDeleter(applicationKey, clientKey);
+			await objectDeleter.DeleteTask(ClassName, objectId);
+		});
+
 	}
 }
