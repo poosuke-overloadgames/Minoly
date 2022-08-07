@@ -36,5 +36,19 @@ namespace Tests
 			Assert.That(result.ErrorResponse, Is.Null);
 		}
 		
+		[UnityTest]
+		public IEnumerator 異常系()
+		{
+			var applicationKey = EditorUserSettings.GetConfigValue("MinolyApplicationKey");
+			var clientKey = EditorUserSettings.GetConfigValue("MinolyClientKey");
+			var objectDeleter = new ObjectDeleter(applicationKey, clientKey);
+
+			yield return objectDeleter.DeleteAsync(ClassName, "Detarame");
+			var result = objectDeleter.GetResult();
+			Assert.That(result.Type, Is.EqualTo(RequestResultType.ProtocolError));
+			Assert.That(result.HttpStatusCode, Is.EqualTo(404));
+			Assert.That(result.ErrorResponse.code, Is.EqualTo("E404001"));
+			Assert.That(result.ErrorResponse.error, Is.EqualTo("No data available."));
+		}
 	}
 }
