@@ -33,8 +33,8 @@ namespace Tests
 			var method = RequestMethod.Get;
 			var uri = new Uri("https://mbaas.api.nifcloud.com/2013-09-01/classes/TestClass");
 			var timeStamp = new Timestamp(new DateTime(2013, 12, 2, 2, 44, 35, 452));
-			var queries = new List<GetQuery> { new GetQuery("testKey", "testValue") };
-			Assert.That(generator.Generate(method, uri, ApplicationKey, ClientKey, queries, timeStamp), Is.EqualTo(Signature));
+			var queries = new []{ new QueryWhereEqualTo("testKey", "testValue") };
+			Assert.That(generator.Generate(method, uri, ApplicationKey, ClientKey, timeStamp, queries), Is.EqualTo(Signature));
 		}
 	}
 }

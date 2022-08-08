@@ -1,5 +1,4 @@
 using System;
-using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -27,7 +26,7 @@ namespace Minoly
 			_result = new ObjectDeleteResult(RequestResultType.Unknown, 0, null);
 			var current = new Timestamp(_current.Get());
 			var uri = new Uri($"https://mbaas.api.nifcloud.com/2013-09-01/classes/{className}/{objectId}");
-			var signature = SignatureGenerator.Generate(RequestMethod.Delete, uri, _applicationKey, _clientKey, Array.Empty<GetQuery>(), current);
+			var signature = SignatureGenerator.Generate(RequestMethod.Delete, uri, _applicationKey, _clientKey, current);
 			_request = new UnityWebRequest(uri, RequestMethod.Delete.ToHttpString());
 			_request.SetRequestHeader("Content-Type","application/json");
 			_request.SetRequestHeader("X-NCMB-Application-Key", _applicationKey);

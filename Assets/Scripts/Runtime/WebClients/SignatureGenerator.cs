@@ -12,7 +12,7 @@ namespace Minoly
 
 		
 		
-		private string GetSource(RequestMethod method, Uri url, string applicationKey, IReadOnlyList<GetQuery> queries, Timestamp timestamp)
+		private string GetSource(RequestMethod method, Uri url, string applicationKey, Timestamp timestamp, IEnumerable<IQuery> queries = null)
 		{
 			_builder.Clear();
 			_builder.AppendFormat("{0}\n", method.ToHttpString());
@@ -21,9 +21,10 @@ namespace Minoly
 			_builder.Append("SignatureMethod=HmacSHA256&SignatureVersion=2");
 			_builder.AppendFormat("&X-NCMB-Application-Key={0}", applicationKey);
 			_builder.AppendFormat("&X-NCMB-Timestamp={0}", timestamp.AsString);
-			if (queries.Count == 0) return _builder.ToString();
-			var q = string.Join(",", queries.Select(q => $"\"{q.Key}\":\"{q.Value}\""));
-			_builder.AppendFormat("&where={0}", Uri.EscapeUriString($"{{{q}}}").Replace(":", "%3A"));
+			if (null == queries) return _builder.ToString();
+			//var q = string.Join(",", queries.Select(q => $"\"{q.Key}\":\"{q.Value}\""));
+			//_builder.AppendFormat("&limit=2&where={0}", Uri.EscapeUriString($"{{{q}}}").Replace(":", "%3A"));
+			_builder.AppendFormat("&{0}", queries.ToEscapedString());
 			return _builder.ToString();
 		}
 
@@ -37,9 +38,9 @@ namespace Minoly
 			return Convert.ToBase64String(hash);
 		}
 
-		public string Generate(RequestMethod method, Uri url, string applicationKey, string clientKey, IReadOnlyList<GetQuery> queries, Timestamp timestamp)
+		public string Generate(RequestMethod method, Uri url, string applicationKey, string clientKey, Timestamp timestamp, IEnumerable<IQuery> queries = null)
 		{
-			var src = GetSource(method, url, applicationKey, queries, timestamp);
+			var src = GetSource(method, url, applicationKey, timestamp, queries);
 			return Generate(src, clientKey);
 		}
 	}

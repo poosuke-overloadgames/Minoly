@@ -19,7 +19,7 @@ namespace Tests
 			var applicationKey = EditorUserSettings.GetConfigValue("MinolyApplicationKey");
 			var clientKey = EditorUserSettings.GetConfigValue("MinolyClientKey");
 			var objectFinder = new ObjectFinder(applicationKey, clientKey);
-			yield return objectFinder.FindAsync(ClassName, new GetQuery("userName", "aaa"));
+			yield return objectFinder.FindAsync(ClassName, new[]{new QueryWhereEqualTo("userName", "aaa")});
 			var result = objectFinder.GetResult();
 			Assert.That(result.Type, Is.EqualTo(RequestResultType.Success));
 			Assert.That(result.HttpStatusCode, Is.EqualTo(200));

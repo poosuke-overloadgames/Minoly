@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -21,13 +23,14 @@ namespace Minoly
 			_result = ObjectFindResult.CreateUnknown();
 		}
 
-		public UnityWebRequestAsyncOperation FindAsync(string className, GetQuery whereQuery)
+		public UnityWebRequestAsyncOperation FindAsync(string className, IEnumerable<IQuery> queries)
 		{
-			var escapedWhere = Uri.EscapeUriString($"{{\"{whereQuery.Key}\":\"{whereQuery.Value}\"}}").Replace(":", "%3A");
+			//var escapedWhere = Uri.EscapeUriString($"{{\"{whereQuery.Key}\":\"{whereQuery.Value}\"}}").Replace(":", "%3A");
 			_result = ObjectFindResult.CreateUnknown();
 			var current = new Timestamp(_current.Get());
-			var uri = new Uri($"https://mbaas.api.nifcloud.com/2013-09-01/classes/{className}?where={escapedWhere}");
-			var signature = SignatureGenerator.Generate(RequestMethod.Get, uri, _applicationKey, _clientKey, new []{whereQuery}, current);
+			var queryArray = queries as IQuery[] ?? queries.ToArray();
+			var uri = new Uri($"https://mbaas.api.nifcloud.com/2013-09-01/classes/{className}?{queryArray.ToEscapedString()}");
+			var signature = SignatureGenerator.Generate(RequestMethod.Get, uri, _applicationKey, _clientKey, current, queryArray);
 			_request = UnityWebRequest.Get(uri);
 			_request.SetRequestHeader("Content-Type","application/json");
 			_request.SetRequestHeader("X-NCMB-Application-Key", _applicationKey);
