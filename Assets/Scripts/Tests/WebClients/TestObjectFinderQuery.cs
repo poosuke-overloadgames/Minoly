@@ -118,6 +118,22 @@ namespace Tests
 		});
 		
 		[UnityTest]
+		public IEnumerator WhereNotEqualToテスト() => UniTask.ToCoroutine(async () =>
+		{
+			var b = await PostAsync(new TestClassToPost { userName = "bbb", score = 100 });
+			var c = await PostAsync(new TestClassToPost { userName = "ccc", score = 200 });
+			var body = await FindAsync(new IQuery[]
+			{
+				QueryWhere.Create(new WhereNotEqualTo("userName", "aaa"))
+			});
+			var users = JsonUtility.FromJson<FoundTestClass>(body).results;
+			Assert.That(users.Select(u => u.userName), Is.EquivalentTo(new[] { "bbb", "ccc" }));
+
+			await DeleteAsync(b);
+			await DeleteAsync(c);
+		});
+		
+		[UnityTest]
 		public IEnumerator WhereGreaterThanテスト() => UniTask.ToCoroutine(async () =>
 		{
 			var b = await PostAsync(new TestClassToPost
