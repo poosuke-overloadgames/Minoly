@@ -29,6 +29,7 @@ namespace Minoly
 		}
 		public UnityWebRequestAsyncOperation UpdateAsync(string className, string objectId, string contentInJson)
 		{
+			if (GetResult().Type == RequestResultType.InProgress) throw new MinolyInProgressException();
 			_result = ObjectUpdateResult.CreateUnknown();
 			var current = new Timestamp(_current.Get());
 			var uri = new Uri($"https://mbaas.api.nifcloud.com/2013-09-01/classes/{className}/{objectId}");

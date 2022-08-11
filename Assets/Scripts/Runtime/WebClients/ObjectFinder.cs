@@ -50,6 +50,7 @@ namespace Minoly
 
 		public UnityWebRequestAsyncOperation FindAsync(string className, IEnumerable<IQuery> queries)
 		{
+			if (GetResult().Type == RequestResultType.InProgress) throw new MinolyInProgressException();
 			var queryArray = queries as IQuery[] ?? queries.ToArray();
 			ThrowExceptionIfDuplicationQueryFound(queryArray);
 			

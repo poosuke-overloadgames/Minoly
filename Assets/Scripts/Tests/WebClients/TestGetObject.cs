@@ -7,6 +7,7 @@ using Minoly.UniTask;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.TestTools;
 
 namespace Tests
@@ -36,7 +37,7 @@ namespace Tests
 		}
 
 		[UnityTest]
-		public IEnumerator 異常系()
+		public IEnumerator 異常系_clientKey間違い()
 		{
 			var applicationKey = EditorUserSettings.GetConfigValue("MinolyApplicationKey");
 			var clientKey = "Detarame";
@@ -48,6 +49,31 @@ namespace Tests
 			Assert.That(result.HttpStatusCode, Is.EqualTo(403));
 			Assert.That(result.ErrorResponse.code, Is.EqualTo("E403002"));
 			Assert.That(result.ErrorResponse.error, Is.EqualTo("Unauthorized operations for signature."));
+		}
+
+		[UnityTest]
+		public IEnumerator 異常系_多重取得()
+		{
+			var applicationKey = EditorUserSettings.GetConfigValue("MinolyApplicationKey");
+			var clientKey = EditorUserSettings.GetConfigValue("MinolyClientKey");
+			var objectId = EditorUserSettings.GetConfigValue("MinolyObjectId");
+			var objectGetter = new ObjectGetter(applicationKey, clientKey);
+			var op1 = objectGetter.FetchAsync(ClassName, objectId);
+			UnityWebRequestAsyncOperation op2 = null;
+			var caught = false;
+			try
+			{
+				//objectGetterを新しく作る必要がある。
+				op2 = objectGetter.FetchAsync(ClassName, objectId);
+			}
+			catch (MinolyInProgressException)
+			{
+				caught = true;
+			}
+
+			yield return op1;
+			yield return op2;
+			Assert.That(caught, Is.True);
 		}
 
 		[UnityTest]
