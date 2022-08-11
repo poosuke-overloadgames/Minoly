@@ -139,6 +139,8 @@ namespace Tests
 				dateTime = new ApiDateTime(new DateTime(2022,8,1))
 			});
 			
+			
+			
 			var body = await FindAsync(new IQuery[]
 			{
 				QueryWhere.Create(new WhereGreaterThan("score", 300))
@@ -146,12 +148,24 @@ namespace Tests
 			var users = JsonUtility.FromJson<FoundTestClass>(body).results;
 			Assert.That(users.Select(u => u.userName), Is.EquivalentTo(new[] { "bbb", "ddd" }));
 
+			
+			
+			body = await FindAsync(new IQuery[]
+			{
+				QueryWhere.Create(new WhereGreaterThan("score", 300, false))
+			});
+			users = JsonUtility.FromJson<FoundTestClass>(body).results;
+			Assert.That(users.Select(u => u.userName), Is.EquivalentTo(new[] { "ddd" }));
+
+			
+			
 			body = await FindAsync(new IQuery[]
 			{
 				QueryWhere.Create(new WhereGreaterThan("userName", "ccc"))
 			});
 			users = JsonUtility.FromJson<FoundTestClass>(body).results;
 			Assert.That(users.Select(u => u.userName), Is.EquivalentTo(new[] { "ccc", "ddd" }));
+
 			
 
 			body = await FindAsync(new IQuery[]
