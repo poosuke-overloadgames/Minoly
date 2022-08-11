@@ -1,6 +1,7 @@
 #if VALID_UNITASK
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 
@@ -56,6 +57,19 @@ namespace Minoly.UniTask
 		{
 			await objectDeleter.DeleteAsync(className, objectId).ToUniTask(progress, timing, cancellationToken);
 			return objectDeleter.GetResult();
+		}
+		
+		public static async UniTask<ObjectFindResult> FindTask(
+			this ObjectFinder objectFinder,
+			string className,
+			IEnumerable<IQuery> queries,
+			IProgress<float> progress = null,
+			PlayerLoopTiming timing = PlayerLoopTiming.Update,
+			CancellationToken cancellationToken = default
+		)
+		{
+			await objectFinder.FindAsync(className, queries).ToUniTask(progress, timing, cancellationToken);
+			return objectFinder.GetResult();
 		}
 	}
 }
