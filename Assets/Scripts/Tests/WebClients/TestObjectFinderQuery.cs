@@ -182,10 +182,11 @@ namespace Tests
 		});
 
 		[UnityTest]
-		public IEnumerator WhereAndテスト() => UniTask.ToCoroutine(async () =>
+		public IEnumerator WhereAndOrテスト() => UniTask.ToCoroutine(async () =>
 		{
 			var a2 = await PostAsync(new TestClassToPost { userName = "aaa", score = 200 });
 			var b1 = await PostAsync(new TestClassToPost { userName = "bbb", score = 100 });
+			var b2 = await PostAsync(new TestClassToPost { userName = "bbb", score = 200 });
 			var body = await FindAsync(new IQuery[]
 			{
 				QueryWhere.Create(new WhereAnd(new IWhereCondition[]
@@ -198,8 +199,21 @@ namespace Tests
 			var users = JsonUtility.FromJson<FoundTestClass>(body).results;
 			Assert.That(users.Select(u => u.userName), Is.EquivalentTo(new[] { "aaa" }));
 			
+			body = await FindAsync(new IQuery[]
+			{
+				QueryWhere.Create(new WhereOr(new IWhereCondition[]
+					{
+						new WhereEqualTo("userName", "aaa"),
+						new WhereLessThan("score", 150)
+					}
+				))
+			});
+			users = JsonUtility.FromJson<FoundTestClass>(body).results;
+			Assert.That(users.Select(u => u.userName), Is.EquivalentTo(new[] { "aaa", "aaa", "bbb" }));
+			
 			await DeleteAsync(a2);
 			await DeleteAsync(b1);
+			await DeleteAsync(b2);
 
 		});
 	}
