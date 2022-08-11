@@ -214,7 +214,26 @@ namespace Tests
 			await DeleteAsync(a2);
 			await DeleteAsync(b1);
 			await DeleteAsync(b2);
+		});
 
+		[UnityTest]
+		public IEnumerator WhereInRangeテスト() => UniTask.ToCoroutine(async () =>
+		{
+			var a0 = await PostAsync(new TestClassToPost { userName = "aaa", score = 0 });
+			var a2 = await PostAsync(new TestClassToPost { userName = "aaa", score = 200 });
+			var body = await FindAsync(new IQuery[]
+			{
+				QueryWhere.Create(new WhereAnd(new IWhereCondition[]
+					{
+						new WhereInRange("score", 50, 150)
+					}
+				))
+			});
+			var users = JsonUtility.FromJson<FoundTestClass>(body).results;
+			Assert.That(users.Select(u => u.score), Is.EquivalentTo(new[] { 100 }));
+			
+			await DeleteAsync(a0);
+			await DeleteAsync(a2);
 		});
 	}
 }
