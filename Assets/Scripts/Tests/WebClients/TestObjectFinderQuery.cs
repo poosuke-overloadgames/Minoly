@@ -1,7 +1,10 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Cysharp.Threading.Tasks;
 using Minoly;
+using Minoly.ApiTypes;
 using Minoly.UniTask;
 using NUnit.Framework;
 using UnityEditor;
@@ -26,7 +29,7 @@ namespace Tests
 			return result.Body;
 		}
 
-		private async UniTask<string> PostAsync(TestClassForPost testClass)
+		private async UniTask<string> PostAsync(TestClassToPost testClass)
 		{
 			var json = JsonUtility.ToJson(testClass);
 			var result = await _objectPostman.PostTask(ClassName, json);
@@ -76,10 +79,10 @@ namespace Tests
 		[UnityTest]
 		public IEnumerator LimitSkipWhere複合テスト() => UniTask.ToCoroutine(async () =>
 		{
-			var a2 = await PostAsync(new TestClassForPost { userName = "aaa", score = 200 });
-			var a3 = await PostAsync(new TestClassForPost { userName = "aaa", score = 300 });
-			var a0 = await PostAsync(new TestClassForPost { userName = "aaa", score = 0 });
-			var b1 = await PostAsync(new TestClassForPost { userName = "bbb", score = 150 });
+			var a2 = await PostAsync(new TestClassToPost { userName = "aaa", score = 200 });
+			var a3 = await PostAsync(new TestClassToPost { userName = "aaa", score = 300 });
+			var a0 = await PostAsync(new TestClassToPost { userName = "aaa", score = 0 });
+			var b1 = await PostAsync(new TestClassToPost { userName = "bbb", score = 150 });
 			var body = await FindAsync(new IQuery[]
 			{
 				new QueryWhereEqualTo("userName", "aaa"),
@@ -112,6 +115,56 @@ namespace Tests
 			Assert.That(users.Length, Is.EqualTo(1));
 			Assert.That(users[0].userName, Is.EqualTo("aaa"));
 			Assert.That(users[0].score, Is.EqualTo(100));
+		});
+		
+		[UnityTest]
+		public IEnumerator WhereGreaterThanテスト() => UniTask.ToCoroutine(async () =>
+		{
+			var b = await PostAsync(new TestClassToPost
+			{
+				userName = "bbb", 
+				score = 300, 
+				dateTime = new ApiDateTime(new DateTime(2022,8,3))
+			});
+			var c = await PostAsync(new TestClassToPost
+			{
+				userName = "ccc",
+				score = 200,
+				dateTime = new ApiDateTime(new DateTime(2022, 8, 2))
+			});
+			var d = await PostAsync(new TestClassToPost
+			{
+				userName = "ddd", 
+				score = 400,
+				dateTime = new ApiDateTime(new DateTime(2022,8,1))
+			});
+			
+			var body = await FindAsync(new IQuery[]
+			{
+				QueryWhere.Create(new WhereGreaterThan("score", 300))
+			});
+			var users = JsonUtility.FromJson<FoundTestClass>(body).results;
+			Assert.That(users.Select(u => u.userName), Is.EquivalentTo(new[] { "bbb", "ddd" }));
+
+			body = await FindAsync(new IQuery[]
+			{
+				QueryWhere.Create(new WhereGreaterThan("userName", "ccc"))
+			});
+			users = JsonUtility.FromJson<FoundTestClass>(body).results;
+			Assert.That(users.Select(u => u.userName), Is.EquivalentTo(new[] { "ccc", "ddd" }));
+			
+
+			body = await FindAsync(new IQuery[]
+			{
+				QueryWhere.Create(new WhereGreaterThan("dateTime", new DateTime(2022,8,2)))
+			});
+			users = JsonUtility.FromJson<FoundTestClass>(body).results;
+			Assert.That(users.Select(u => u.userName), Is.EquivalentTo(new[] { "bbb", "ccc" }));
+
+			await DeleteAsync(b);
+			await DeleteAsync(c);
+			await DeleteAsync(d);
+
 		});
 	}
 }
