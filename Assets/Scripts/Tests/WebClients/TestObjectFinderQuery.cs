@@ -100,5 +100,18 @@ namespace Tests
 			await DeleteAsync(a0);
 			await DeleteAsync(b1);
 		});
+		
+		[UnityTest]
+		public IEnumerator WhereEqualToテスト() => UniTask.ToCoroutine(async () =>
+		{
+			var body = await FindAsync(new IQuery[]
+			{
+				QueryWhere.Create(new WhereEqualTo("userName", "aaa"))
+			});
+			var users = JsonUtility.FromJson<FoundTestClass>(body).results;
+			Assert.That(users.Length, Is.EqualTo(1));
+			Assert.That(users[0].userName, Is.EqualTo("aaa"));
+			Assert.That(users[0].score, Is.EqualTo(100));
+		});
 	}
 }
