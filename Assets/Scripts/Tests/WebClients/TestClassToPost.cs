@@ -8,6 +8,6 @@ namespace Tests
 	{
 		public string userName;
 		public int score;
-		public ApiDateTime dateTime;
+		public ApiDateTime dateTime = new ApiDateTime(DateTime.Now);
 	}
 }
