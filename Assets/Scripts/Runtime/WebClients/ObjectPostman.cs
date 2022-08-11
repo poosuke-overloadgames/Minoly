@@ -5,7 +5,7 @@ using UnityEngine.Networking;
 
 namespace Minoly
 {
-	public class ObjectPostman
+	public class ObjectPostman : IDisposable
 	{
 		[Serializable]
 		private class ResultBody
@@ -65,5 +65,10 @@ namespace Minoly
 			return _result = new ObjectPostResult(resultType, statusCode, error, objectId, createDate);
 		}
 
+		public void Dispose()
+		{
+			_request?.Dispose();
+			_result = ObjectPostResult.CreateUnknown();
+		}
 	}
 }

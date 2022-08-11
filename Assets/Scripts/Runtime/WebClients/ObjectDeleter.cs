@@ -4,7 +4,7 @@ using UnityEngine.Networking;
 
 namespace Minoly
 {
-	public class ObjectDeleter
+	public class ObjectDeleter : IDisposable
 	{
 		private static readonly SignatureGenerator SignatureGenerator = new SignatureGenerator();
 		private readonly ICurrentDateTime _current;
@@ -52,5 +52,10 @@ namespace Minoly
 			return _result = new ObjectDeleteResult(resultType, statusCode, error);
 		}
 
+		public void Dispose()
+		{
+			_request?.Dispose();
+			_result = new ObjectDeleteResult(RequestResultType.Unknown, 0, null);
+		}
 	}
 }
