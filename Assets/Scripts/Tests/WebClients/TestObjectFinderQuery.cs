@@ -237,7 +237,7 @@ namespace Tests
 		});
 
 		[UnityTest]
-		public IEnumerator WhereAnyOfテスト() => UniTask.ToCoroutine(async () =>
+		public IEnumerator WhereAnyOf_NotAnyOfテスト() => UniTask.ToCoroutine(async () =>
 		{
 			var b = await PostAsync(new TestClassToPost { userName = "bbb", score = 0 });
 			var c = await PostAsync(new TestClassToPost { userName = "ccc", score = 200 });
@@ -251,6 +251,17 @@ namespace Tests
 			});
 			var users = JsonUtility.FromJson<FoundTestClass>(body).results;
 			Assert.That(users.Select(u => u.userName), Is.EquivalentTo(new[] { "aaa", "bbb" }));
+			
+			body = await FindAsync(new IQuery[]
+			{
+				QueryWhere.Create(new WhereAnd(new IWhereCondition[]
+					{
+						new WhereNotAnyOf("userName", new []{"aaa", "bbb", "xxx"})
+					}
+				))
+			});
+			users = JsonUtility.FromJson<FoundTestClass>(body).results;
+			Assert.That(users.Select(u => u.userName), Is.EquivalentTo(new[] { "ccc" }));
 			
 			await DeleteAsync(b);
 			await DeleteAsync(c);
