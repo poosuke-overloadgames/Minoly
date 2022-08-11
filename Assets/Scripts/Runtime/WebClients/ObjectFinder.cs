@@ -23,12 +23,38 @@ namespace Minoly
 			_result = ObjectFindResult.CreateUnknown();
 		}
 
+		private class QueryComparer : IEqualityComparer<IQuery>
+		{
+			public bool Equals(IQuery x, IQuery y)
+			{
+				if (ReferenceEquals(x, y)) return true;
+				if (ReferenceEquals(x, null)) return false;
+				if (ReferenceEquals(y, null)) return false;
+				if (x.GetType() != y.GetType()) return false;
+				return x.Key == y.Key;
+			}
+
+			public int GetHashCode(IQuery obj)
+			{
+				return (obj.Key != null ? obj.Key.GetHashCode() : 0);
+			}
+		}
+
+		private static readonly QueryComparer Comparer = new QueryComparer();
+
+		private void ThrowExceptionIfDuplicationQueryFound(IReadOnlyList<IQuery> queries)
+		{
+			if (queries.Count == queries.Distinct(Comparer).Count()) return;
+			throw new MinolyDuplicateQueryException();
+		}
+
 		public UnityWebRequestAsyncOperation FindAsync(string className, IEnumerable<IQuery> queries)
 		{
-			//var escapedWhere = Uri.EscapeUriString($"{{\"{whereQuery.Key}\":\"{whereQuery.Value}\"}}").Replace(":", "%3A");
+			var queryArray = queries as IQuery[] ?? queries.ToArray();
+			ThrowExceptionIfDuplicationQueryFound(queryArray);
+			
 			_result = ObjectFindResult.CreateUnknown();
 			var current = new Timestamp(_current.Get());
-			var queryArray = queries as IQuery[] ?? queries.ToArray();
 			var uri = new Uri($"https://mbaas.api.nifcloud.com/2013-09-01/classes/{className}?{queryArray.ToEscapedString()}");
 			var signature = SignatureGenerator.Generate(RequestMethod.Get, uri, _applicationKey, _clientKey, current, queryArray);
 			_request = UnityWebRequest.Get(uri);
