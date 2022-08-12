@@ -5,7 +5,7 @@ namespace Minoly
 	{
 		public WhereEqualTo(string fieldName, string val)
 		{
-			ToJson = CreateJson(fieldName, val);
+			ToJson = CreateJson(fieldName, $"\"{val}\"");
 		}
 		public WhereEqualTo(string fieldName, int val)
 		{
@@ -13,10 +13,10 @@ namespace Minoly
 		}
 		public WhereEqualTo(string fieldName, bool val)
 		{
-			ToJson = CreateJson(fieldName, val ? "true" : "false");
+			ToJson = CreateJson(fieldName, val ? "\"true\"" : "\"false\"");
 		}
 
-		private string CreateJson(string key, string val) => $"\"{key}\":\"{val}\"";
+		private string CreateJson(string key, string val) => $"\"{key}\":{val}";
 
 		public string ToJson { get; }
 	}

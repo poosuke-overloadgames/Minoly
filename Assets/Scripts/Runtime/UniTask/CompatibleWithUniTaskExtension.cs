@@ -172,7 +172,16 @@ namespace Minoly.UniTask
 		)
 		{
 			var finder = dataStore.CreateFinder();
-			var result = await finder.FindTask(className, queries, progress, timing, cancellationToken);
+			
+			ObjectFindResult result;
+			try
+			{
+				result = await finder.FindTask(className, queries, progress, timing, cancellationToken);
+			}
+			catch (UnityWebRequestException)
+			{
+				result = finder.GetResult();
+			}
 			finder.Dispose();
 			return result;
 		}

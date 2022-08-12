@@ -135,5 +135,55 @@ namespace Tests
 			Assert.That(resultUpdate.ErrorResponse.code, Is.EqualTo("E404001"));
 			Assert.That(resultUpdate.ErrorResponse.error, Is.EqualTo("No data available."));
 		});
+
+		[UnityTest]
+		public IEnumerator オブジェクトの検索成功() => UniTask.ToCoroutine(async () =>
+		{
+			var query = QueryWhere.Create(new WhereAnd(new IWhereCondition[]
+			{
+				new WhereEqualTo("userName", "aaa"),
+				new WhereEqualTo("score", 100),
+			}));
+			var result = await _dataStore.FindAsync(ClassName, new[] { query });
+			Assert.That(result.Type, Is.EqualTo(RequestResultType.Success));
+			Assert.That(result.HttpStatusCode, Is.EqualTo(200));
+			Assert.That(result.ErrorResponse, Is.Null);
+			var testClass = JsonUtility.FromJson<FoundTestClass>(result.Body).results[0];
+			Assert.That(testClass.userName, Is.EqualTo("aaa"));
+			Assert.That(testClass.score, Is.EqualTo(100));
+		});
+
+		[UnityTest]
+		public IEnumerator オブジェクトの検索成功0件() => UniTask.ToCoroutine(async () =>
+		{
+			var query = QueryWhere.Create(new WhereAnd(new IWhereCondition[]
+			{
+				new WhereEqualTo("userName", "ccc"),
+			}));
+			var result = await _dataStore.FindAsync(ClassName, new[] { query });
+			Assert.That(result.Type, Is.EqualTo(RequestResultType.Success));
+			Assert.That(result.HttpStatusCode, Is.EqualTo(200));
+			Assert.That(result.ErrorResponse, Is.Null);
+			var testClasses = JsonUtility.FromJson<FoundTestClass>(result.Body).results;
+			Assert.That(testClasses.Length, Is.EqualTo(0));
+		});
+
+		[UnityTest]
+		public IEnumerator オブジェクトの検索失敗() => UniTask.ToCoroutine(async () =>
+		{
+			var applicationKey = "Detarame";
+			var clientKey = EditorUserSettings.GetConfigValue("MinolyClientKey");
+			var dataStore = new MinolyDataStore(applicationKey, clientKey);
+			var query = QueryWhere.Create(new WhereAnd(new IWhereCondition[]
+			{
+				new WhereEqualTo("userName", "aaa"),
+				new WhereEqualTo("score", 100),
+			}));
+			var result = await dataStore.FindAsync(ClassName, new[] { query });
+			Assert.That(result.Type, Is.EqualTo(RequestResultType.ProtocolError));
+			Assert.That(result.HttpStatusCode, Is.EqualTo(404));
+			Assert.That(result.ErrorResponse.code, Is.EqualTo("E404005"));
+			Assert.That(result.ErrorResponse.error, Is.EqualTo("No such application."));
+		});
 	}
 }
