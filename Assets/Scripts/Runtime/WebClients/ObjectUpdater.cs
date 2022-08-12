@@ -5,7 +5,7 @@ using UnityEngine.Networking;
 
 namespace Minoly
 {
-	public class ObjectUpdater
+	public class ObjectUpdater : IDisposable
 	{
 		[Serializable]
 		private class ResultBody
@@ -62,5 +62,10 @@ namespace Minoly
 		}
 
 
+		public void Dispose()
+		{
+			_request?.Dispose();
+			_result = ObjectUpdateResult.CreateUnknown();
+		}
 	}
 }
