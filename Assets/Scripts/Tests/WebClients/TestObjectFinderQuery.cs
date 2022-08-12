@@ -20,6 +20,8 @@ namespace Tests
 		private ObjectFinder _objectFinder;
 		private ObjectPostman _objectPostman;
 		private ObjectDeleter _objectDeleter;
+		private readonly List<string> _objectIds = new List<string>();
+
 		private async UniTask<string> FindAsync(IEnumerable<IQuery> queries)
 		{
 			var result = await _objectFinder.FindTask(ClassName, queries);
@@ -39,22 +41,27 @@ namespace Tests
 			return result.ObjectId;
 		}
 
-		private async UniTask DeleteAsync(string objectId)
-		{
-			var result = await _objectDeleter.DeleteTask(ClassName, objectId);
-			Assert.That(result.Type, Is.EqualTo(RequestResultType.Success));
-			Assert.That(result.HttpStatusCode, Is.EqualTo(200));
-			Assert.That(result.ErrorResponse, Is.Null);
-		}
-
 		[SetUp]
-		public void Init()
+		public void SetUp()
 		{
 			var applicationKey = EditorUserSettings.GetConfigValue("MinolyApplicationKey");
 			var clientKey = EditorUserSettings.GetConfigValue("MinolyClientKey");
 			_objectFinder = new ObjectFinder(applicationKey, clientKey);
 			_objectPostman = new ObjectPostman(applicationKey, clientKey);
 			_objectDeleter = new ObjectDeleter(applicationKey, clientKey);
+			_objectIds.Clear();
+		}
+
+		[UnityTearDown]
+		public IEnumerator TearDown()
+		{
+			foreach (var id in _objectIds)
+			{
+				yield return _objectDeleter.DeleteAsync(ClassName, id);
+			}
+			_objectFinder.Dispose();
+			_objectDeleter.Dispose();
+			_objectPostman.Dispose();
 		}
 
 		[UnityTest]
@@ -79,10 +86,12 @@ namespace Tests
 		[UnityTest]
 		public IEnumerator LimitSkipWhere複合テスト() => UniTask.ToCoroutine(async () =>
 		{
+			var a1 = await PostAsync(new TestClassToPost { userName = "aaa", score = 100 });
 			var a2 = await PostAsync(new TestClassToPost { userName = "aaa", score = 200 });
 			var a3 = await PostAsync(new TestClassToPost { userName = "aaa", score = 300 });
 			var a0 = await PostAsync(new TestClassToPost { userName = "aaa", score = 0 });
 			var b1 = await PostAsync(new TestClassToPost { userName = "bbb", score = 150 });
+			_objectIds.AddRange(new[] { a1, a2, a3, a0, b1 });
 			var body = await FindAsync(new IQuery[]
 			{
 				new QueryWhereEqualTo("userName", "aaa"),
@@ -97,16 +106,13 @@ namespace Tests
 			Assert.That(users[0].score, Is.EqualTo(200));
 			Assert.That(users[1].userName, Is.EqualTo("aaa"));
 			Assert.That(users[1].score, Is.EqualTo(100));
-
-			await DeleteAsync(a2);
-			await DeleteAsync(a3);
-			await DeleteAsync(a0);
-			await DeleteAsync(b1);
 		});
 		
 		[UnityTest]
 		public IEnumerator WhereEqualToテスト() => UniTask.ToCoroutine(async () =>
 		{
+			var a = await PostAsync(new TestClassToPost { userName = "aaa", score = 100 });
+			_objectIds.Add(a);
 			var body = await FindAsync(new IQuery[]
 			{
 				QueryWhere.Create(new WhereEqualTo("userName", "aaa"))
@@ -120,17 +126,16 @@ namespace Tests
 		[UnityTest]
 		public IEnumerator WhereNotEqualToテスト() => UniTask.ToCoroutine(async () =>
 		{
+			var a = await PostAsync(new TestClassToPost { userName = "aaa", score = 100 });
 			var b = await PostAsync(new TestClassToPost { userName = "bbb", score = 100 });
 			var c = await PostAsync(new TestClassToPost { userName = "ccc", score = 200 });
+			_objectIds.AddRange(new[] { a, b, c });
 			var body = await FindAsync(new IQuery[]
 			{
 				QueryWhere.Create(new WhereNotEqualTo("userName", "aaa"))
 			});
 			var users = JsonUtility.FromJson<FoundTestClass>(body).results;
 			Assert.That(users.Select(u => u.userName), Is.EquivalentTo(new[] { "bbb", "ccc" }));
-
-			await DeleteAsync(b);
-			await DeleteAsync(c);
 		});
 		
 		[UnityTest]
@@ -154,7 +159,7 @@ namespace Tests
 				score = 400,
 				dateTime = new ApiDateTime(new DateTime(2022,8,1))
 			});
-			
+			_objectIds.AddRange(new[] { b, c, d });
 			
 			
 			var body = await FindAsync(new IQuery[]
@@ -191,18 +196,16 @@ namespace Tests
 			users = JsonUtility.FromJson<FoundTestClass>(body).results;
 			Assert.That(users.Select(u => u.userName), Is.EquivalentTo(new[] { "bbb", "ccc" }));
 
-			await DeleteAsync(b);
-			await DeleteAsync(c);
-			await DeleteAsync(d);
-
 		});
 
 		[UnityTest]
 		public IEnumerator WhereAndOrテスト() => UniTask.ToCoroutine(async () =>
 		{
+			var a1 = await PostAsync(new TestClassToPost { userName = "aaa", score = 100 });
 			var a2 = await PostAsync(new TestClassToPost { userName = "aaa", score = 200 });
 			var b1 = await PostAsync(new TestClassToPost { userName = "bbb", score = 100 });
 			var b2 = await PostAsync(new TestClassToPost { userName = "bbb", score = 200 });
+			_objectIds.AddRange(new[]{a1,a2,b1,b2});
 			var body = await FindAsync(new IQuery[]
 			{
 				QueryWhere.Create(new WhereAnd(new IWhereCondition[]
@@ -226,17 +229,15 @@ namespace Tests
 			});
 			users = JsonUtility.FromJson<FoundTestClass>(body).results;
 			Assert.That(users.Select(u => u.userName), Is.EquivalentTo(new[] { "aaa", "aaa", "bbb" }));
-			
-			await DeleteAsync(a2);
-			await DeleteAsync(b1);
-			await DeleteAsync(b2);
 		});
 
 		[UnityTest]
 		public IEnumerator WhereInRangeテスト() => UniTask.ToCoroutine(async () =>
 		{
 			var a0 = await PostAsync(new TestClassToPost { userName = "aaa", score = 0 });
+			var a1 = await PostAsync(new TestClassToPost { userName = "aaa", score = 100 });
 			var a2 = await PostAsync(new TestClassToPost { userName = "aaa", score = 200 });
+			_objectIds.AddRange(new[] { a0, a1, a2 });
 			var body = await FindAsync(new IQuery[]
 			{
 				QueryWhere.Create(new WhereAnd(new IWhereCondition[]
@@ -247,16 +248,15 @@ namespace Tests
 			});
 			var users = JsonUtility.FromJson<FoundTestClass>(body).results;
 			Assert.That(users.Select(u => u.score), Is.EquivalentTo(new[] { 100 }));
-			
-			await DeleteAsync(a0);
-			await DeleteAsync(a2);
 		});
 
 		[UnityTest]
 		public IEnumerator WhereAnyOf_NotAnyOfテスト() => UniTask.ToCoroutine(async () =>
 		{
+			var a = await PostAsync(new TestClassToPost { userName = "aaa", score = 100 });
 			var b = await PostAsync(new TestClassToPost { userName = "bbb", score = 0 });
 			var c = await PostAsync(new TestClassToPost { userName = "ccc", score = 200 });
+			_objectIds.AddRange(new[] { a, b, c });
 			var body = await FindAsync(new IQuery[]
 			{
 				QueryWhere.Create(new WhereAnd(new IWhereCondition[]
@@ -278,9 +278,6 @@ namespace Tests
 			});
 			users = JsonUtility.FromJson<FoundTestClass>(body).results;
 			Assert.That(users.Select(u => u.userName), Is.EquivalentTo(new[] { "ccc" }));
-			
-			await DeleteAsync(b);
-			await DeleteAsync(c);
 		});
 	}
 }
