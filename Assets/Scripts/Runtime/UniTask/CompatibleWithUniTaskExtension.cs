@@ -65,7 +65,15 @@ namespace Minoly.UniTask
 		)
 		{
 			var postman = dataStore.CreatePostman();
-			var result = await postman.PostTask(className, contentInJson, progress, timing, cancellationToken);
+			ObjectPostResult result;
+			try
+			{
+				result = await postman.PostTask(className, contentInJson, progress, timing, cancellationToken);
+			}
+			catch (UnityWebRequestException)
+			{
+				result = postman.GetResult();
+			}
 			postman.Dispose();
 			return result;
 		}
@@ -121,7 +129,15 @@ namespace Minoly.UniTask
 		)
 		{
 			var deleter = dataStore.CreateDeleter();
-			var result = await deleter.DeleteTask(className, objectId, progress, timing, cancellationToken);
+			ObjectDeleteResult result;
+			try
+			{
+				result = await deleter.DeleteTask(className, objectId, progress, timing, cancellationToken);
+			}
+			catch (UnityWebRequestException)
+			{
+				result = deleter.GetResult();
+			}
 			deleter.Dispose();
 			return result;
 		}

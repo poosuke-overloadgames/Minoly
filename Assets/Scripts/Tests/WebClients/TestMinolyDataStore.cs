@@ -68,5 +68,41 @@ namespace Tests
 			Assert.That(result.ErrorResponse.error, Is.EqualTo("No data available."));
 			Assert.That(result.Body, Is.EqualTo("{\"code\":\"E404001\",\"error\":\"No data available.\"}"));
 		});
+		
+		[UnityTest]
+		public IEnumerator オブジェクトの登録削除成功() => UniTask.ToCoroutine(async () =>
+		{
+			var json = JsonUtility.ToJson(new TestClassToPost { userName = "ccc", score = 300 });
+			var resultPost = await _dataStore.PostAsync(ClassName, json);
+			Assert.That(resultPost.Type, Is.EqualTo(RequestResultType.Success));
+			Assert.That(resultPost.HttpStatusCode, Is.EqualTo(201));
+			Assert.That(resultPost.ErrorResponse, Is.Null);
+			var objectId = resultPost.ObjectId;
+			var resultDelete = await _dataStore.DeleteAsync(ClassName, objectId);
+			Assert.That(resultDelete.Type, Is.EqualTo(RequestResultType.Success));
+			Assert.That(resultDelete.HttpStatusCode, Is.EqualTo(200));
+			Assert.That(resultDelete.ErrorResponse, Is.Null);
+		});
+		
+		[UnityTest]
+		public IEnumerator オブジェクトの登録失敗() => UniTask.ToCoroutine(async () =>
+		{
+			var result = await _dataStore.PostAsync(ClassName, "Detarame");
+			Assert.That(result.Type, Is.EqualTo(RequestResultType.ProtocolError));
+			Assert.That(result.HttpStatusCode, Is.EqualTo(400));
+			Assert.That(result.ErrorResponse.code, Is.EqualTo("E400001"));
+			Assert.That(result.ErrorResponse.error, Is.EqualTo("JSON is invalid format."));
+		});
+		
+		[UnityTest]
+		public IEnumerator オブジェクトの削除失敗() => UniTask.ToCoroutine(async () =>
+		{
+			var result = await _dataStore.DeleteAsync(ClassName, "Detarame");
+			Assert.That(result.Type, Is.EqualTo(RequestResultType.ProtocolError));
+			Assert.That(result.HttpStatusCode, Is.EqualTo(404));
+			Assert.That(result.ErrorResponse.code, Is.EqualTo("E404001"));
+			Assert.That(result.ErrorResponse.error, Is.EqualTo("No data available."));
+		});
+
 	}
 }
