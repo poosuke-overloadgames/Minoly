@@ -16,20 +16,44 @@ namespace Tests
 	public class TestObjectFinder
 	{
 		private const string ClassName = "TestClass";
+		private const string ContentInJsonOrg = "{\"userName\": \"aaa\", \"score\": \"100\"}";
 		private const int Score = 100;
 		private const string UserName = "aaa";
-		
-		[UnityTest]
-		public IEnumerator 正常系1件ヒット()
+
+		private ObjectFinder _objectFinder;
+		private ObjectPostman _objectPostman;
+		private ObjectDeleter _objectDeleter;
+		private string _objectId;
+
+		[UnitySetUp]
+		public IEnumerator SetUp()
 		{
 			var applicationKey = EditorUserSettings.GetConfigValue("MinolyApplicationKey");
 			var clientKey = EditorUserSettings.GetConfigValue("MinolyClientKey");
-			var objectFinder = new ObjectFinder(applicationKey, clientKey);
-			yield return objectFinder.FindAsync(ClassName, new IQuery[]
+			_objectPostman = new ObjectPostman(applicationKey, clientKey);
+			_objectDeleter = new ObjectDeleter(applicationKey, clientKey);
+			_objectFinder = new ObjectFinder(applicationKey, clientKey);
+			yield return _objectPostman.PostAsync(ClassName, ContentInJsonOrg);
+			_objectId = _objectPostman.GetResult().ObjectId;
+		}
+
+		[UnityTearDown]
+		public IEnumerator TearDown()
+		{
+			yield return _objectDeleter.DeleteAsync(ClassName, _objectId);
+			_objectPostman.Dispose();
+			_objectDeleter.Dispose();
+			_objectFinder.Dispose();
+		}
+
+		[UnityTest]
+		public IEnumerator 正常系1件ヒット()
+		{
+			yield return _objectFinder.FindAsync(ClassName, new IQuery[]
 			{
 				new QueryWhereEqualTo("userName", UserName)
 			});
-			var result = objectFinder.GetResult();
+			var result = _objectFinder.GetResult();
 			Assert.That(result.Type, Is.EqualTo(RequestResultType.Success));
 			Assert.That(result.HttpStatusCode, Is.EqualTo(200));
 			Assert.That(result.ErrorResponse, Is.Null);
@@ -42,14 +66,11 @@ namespace Tests
 		[UnityTest]
 		public IEnumerator 正常系ノーヒット()
 		{
-			var applicationKey = EditorUserSettings.GetConfigValue("MinolyApplicationKey");
-			var clientKey = EditorUserSettings.GetConfigValue("MinolyClientKey");
-			var objectFinder = new ObjectFinder(applicationKey, clientKey);
-			yield return objectFinder.FindAsync(ClassName, new IQuery[]
+			yield return _objectFinder.FindAsync(ClassName, new IQuery[]
 			{
 				new QueryWhereEqualTo("userName", "Detarame")
 			});
-			var result = objectFinder.GetResult();
+			var result = _objectFinder.GetResult();
 			Assert.That(result.Type, Is.EqualTo(RequestResultType.Success));
 			Assert.That(result.HttpStatusCode, Is.EqualTo(200));
 			Assert.That(result.ErrorResponse, Is.Null);
@@ -72,15 +93,13 @@ namespace Tests
 			Assert.That(result.HttpStatusCode, Is.EqualTo(403));
 			Assert.That(result.ErrorResponse.code, Is.EqualTo("E403002"));
 			Assert.That(result.ErrorResponse.error, Is.EqualTo("Unauthorized operations for signature."));
+			objectFinder.Dispose();
 		}
 
 		[UnityTest]
 		public IEnumerator UniTaskによる正常系1件ヒット() => UniTask.ToCoroutine(async () =>
 		{
-			var applicationKey = EditorUserSettings.GetConfigValue("MinolyApplicationKey");
-			var clientKey = EditorUserSettings.GetConfigValue("MinolyClientKey");
-			var objectFinder = new ObjectFinder(applicationKey, clientKey);
-			var result = await objectFinder.FindTask(ClassName, new IQuery[]
+			var result = await _objectFinder.FindTask(ClassName, new IQuery[]
 			{
 				new QueryWhereEqualTo("userName", UserName)
 			});

@@ -6,7 +6,7 @@ using UnityEngine.Networking;
 
 namespace Minoly
 {
-	public class ObjectFinder
+	public class ObjectFinder : IDisposable
 	{
 		private static readonly SignatureGenerator SignatureGenerator = new SignatureGenerator();
 		private readonly ICurrentDateTime _current;
@@ -80,5 +80,10 @@ namespace Minoly
 			return _result = new ObjectFindResult(resultType, (int)_request.responseCode, error, resultText);
 		}
 
+		public void Dispose()
+		{
+			_request?.Dispose();
+			_result = ObjectFindResult.CreateUnknown();
+		}
 	}
 }
