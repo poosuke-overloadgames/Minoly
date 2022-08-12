@@ -101,7 +101,15 @@ namespace Minoly.UniTask
 		)
 		{
 			var updater = dataStore.CreateUpdater();
-			var result = await updater.UpdateTask(className, objectId, contentInJson, progress, timing, cancellationToken);
+			ObjectUpdateResult result;
+			try
+			{
+				result = await updater.UpdateTask(className, objectId, contentInJson, progress, timing, cancellationToken);
+			}
+			catch(UnityWebRequestException)
+			{
+				result = updater.GetResult();
+			}
 			updater.Dispose();
 			return result;
 		}

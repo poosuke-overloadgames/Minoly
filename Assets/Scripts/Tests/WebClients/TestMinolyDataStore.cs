@@ -103,6 +103,37 @@ namespace Tests
 			Assert.That(result.ErrorResponse.code, Is.EqualTo("E404001"));
 			Assert.That(result.ErrorResponse.error, Is.EqualTo("No data available."));
 		});
+		
+		[UnityTest]
+		public IEnumerator オブジェクトの更新成功() => UniTask.ToCoroutine(async () =>
+		{
+			var testClass = new TestClassToPost { userName = "ccc", score = 100 };
+			var resultPost = await _dataStore.PostAsync(ClassName, JsonUtility.ToJson(testClass));
+			var objectId = resultPost.ObjectId;
+			_objectIds.Add(resultPost.ObjectId);
+			Assert.That(resultPost.Type, Is.EqualTo(RequestResultType.Success));
 
+			testClass.score = 300;
+			var resultUpdate = await _dataStore.UpdateAsync(ClassName, objectId, JsonUtility.ToJson(testClass));
+			Assert.That(resultUpdate.Type, Is.EqualTo(RequestResultType.Success));
+			Assert.That(resultUpdate.HttpStatusCode, Is.EqualTo(200));
+			Assert.That(resultUpdate.ErrorResponse, Is.Null);
+
+			var resultGet = await _dataStore.FetchAsync(ClassName, objectId);
+			var fetched = JsonUtility.FromJson<TestClass>(resultGet.Body);
+			Assert.That(fetched.userName, Is.EqualTo("ccc"));
+			Assert.That(fetched.score, Is.EqualTo(300));
+		});
+
+		[UnityTest]
+		public IEnumerator オブジェクトの更新失敗() => UniTask.ToCoroutine(async () =>
+		{
+			var testClass = new TestClassToPost { userName = "ccc", score = 100 };
+			var resultUpdate = await _dataStore.UpdateAsync(ClassName, "Detarame", JsonUtility.ToJson(testClass));
+			Assert.That(resultUpdate.Type, Is.EqualTo(RequestResultType.ProtocolError));
+			Assert.That(resultUpdate.HttpStatusCode, Is.EqualTo(404));
+			Assert.That(resultUpdate.ErrorResponse.code, Is.EqualTo("E404001"));
+			Assert.That(resultUpdate.ErrorResponse.error, Is.EqualTo("No data available."));
+		});
 	}
 }
