@@ -1,0 +1,11 @@
+{
+  "name": "com.poosuke.minoly",
+  "displayName": "Minoly",
+  "version": "1.0.0",
+  "unity": "2018.4",
+  "description": "Fetch data out of NCMB data store.",
+  "author": {
+    "name": "poosuke"
+  },
+  "license": "MIT"
+}
