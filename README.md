@@ -182,5 +182,5 @@ public void Register()
 ### UniTaskで登録
 ```
 //オブジェクトの登録
-ObjectPostResult result = await dataStore.PostAsync(className, "{\"userName\": \"bbb\", \"score\": \"200\"}");
+ObjectPostResult result = await dataStore.PostAsync(className, "{\"userName\": \"bbb\", \"score\": 200}");
 ```
