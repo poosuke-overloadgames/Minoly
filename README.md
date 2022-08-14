@@ -320,9 +320,9 @@ finder.Dispose();
 ### ObjectFindResult
 | プロパティ       | 型                | 詳細                     |
 |----------------|-------------------|-------------------------|
-| Type           | RequestResultType | ObjectGetResult         |
+| Type           | RequestResultType | ObjectGetResultと同じ    |
 | HttpStatusCode | int               | 成功時は200              |
-| ErrorResponse  | ErrorResponse     | ObjectGetResult         |
+| ErrorResponse  | ErrorResponse     | ObjectGetResultと同じ    |
 | Body           | string            | オブジェクトのJsonが入ります |
 
 Bodyサンプル
@@ -389,10 +389,53 @@ ObjectFindResult result = await dataStore.FindAsync(lassName, new IQuery[]
    - コンストラクタでキー・値を指定します。
    - QueryWhereと同時に指定はできません。
  - QueryWhere
-   - 検索条件をJsonで指定します。
-   - QueryWhere.CreateでIWhereConditionを指定できます(後述)
+   - 検索条件をJsonで指定します。[REST API リファレンス : オブジェクト検索 | ニフクラ mobile backend](https://mbaas.nifcloud.com/doc/current/rest/datastore/objectSearch.html)
+   - QueryWhere.Createで検索条件を指定できます(後述)
    - QueryWhereEqualToと同時に指定できません。
  - IQueryを実装することでクエリを作成できます。
    - `Key`と`Value`がAPIパスのクエリパラメータにおけるキーと値になります。
 
 ※ 同じ種類のクエリを同時に指定できません(QueryWhereとQueryWhereEqualToの組み合わせを含む)。MinolyDuplicateQueryExceptionを投げます。
+
+### QueryWhere.Createで指定できる検索条件
+ - WhereEqualTo
+   - フィールドの値と一致する条件を指定します。
+   - `QueryWhereEqualTo("name","aaa")`は`QueryWhere.Create(new WhereEqualTo("name","aaa"))`の省略形です。
+ - WhereNotEqualTo
+   - フィールドの値と一致**しない**条件を指定します。
+ - WhereGreaterThan
+   - フィールドの値より大きい条件を指定します。
+   - 一致する値を含むかどうかも指定できます。
+ - WhereLessThan
+   - フィールドの値より小さい条件を指定します。
+   - 一致する値を含むかどうかも指定できます。
+ - WhereInRange
+   - フィールドの値の範囲に含む条件を指定します。
+   - 一致する値を含むかどうかも指定できます。
+   - この代わりにWhereAndでWhereGreaterThanとWhereLessThanを使う等、同一フィールドの条件を含めることはできません。[検索クエリについて](https://mbaas.nifcloud.com/doc/current/common/dev_guide.html#%E6%A4%9C%E7%B4%A2%E3%82%AF%E3%82%A8%E3%83%AA%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6)
+ - WhereAnyOf
+   - フィールドのいずれかの値を含む条件を指定できます。
+ - WhereNotAnyOf
+   - フィールドのいずれかの値も含まない条件を指定できます。
+ - WhereAnd
+   - And条件を指定します。
+   - コンストラクタでさらに検索条件を2つ以上指定します。
+ - WhereOr
+   - Or条件を指定します。
+   - コンストラクタでさらに検索条件を2つ以上指定します。
+
+例
+```
+//scoreが100以上
+IWhereCondition condition = new WhereGreaterThan("score", 100);
+
+//nameがaaa,bbb,cccのいずれか
+IWhereCondition condition = new WhereAnyOf("name", new[] { "aaa", "bbb", "ccc" });
+
+//nameがaaa、かつdateTimeが2022/8/1以降
+IWhereCondition condition = new WhereAnd(new IWhereCondition[]
+{
+	new WhereEqualTo("name", "aaa"),
+	new WhereGreaterThan("dateTime", new DateTime(2022, 8, 1))
+});
+```
