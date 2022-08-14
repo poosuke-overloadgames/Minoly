@@ -439,3 +439,36 @@ IWhereCondition condition = new WhereAnd(new IWhereCondition[]
 	new WhereGreaterThan("dateTime", new DateTime(2022, 8, 1))
 });
 ```
+
+## 例外
+全てMinolyExceptionを継承します。
+ - MinolyInProgressException
+   - ObjectGetter等で取得処理中に再度取得を行おうとするとthrowします。
+ - MinolyDuplicateQueryExeption
+   - ObjectFinder.FindAsyncでキー名が同じIQueryを2つ以上指定するとthrowします。
+
+## テストを動かしたいんだけど？
+ 1. NCMBのアカウントを作ります。
+ 2. 任意の名前でアプリケーションを作成します。
+ 3. `TestClass`というクラスを作ります。
+ 4. `userName`,`score`,`dateTime`というフィールドを作ります。
+ 5. UnityのTool > MinolyKeySettingでアプリケーションキーとクライアントキーを保存します。  
+    (EditorUserSettings環境下に保存されるのでgit管理対象にならず安全です) 
+
+## 使用環境
+Unity 2018.4以降で動くと思います。  
+開発環境は2020.3です。
+
+## 使用条件
+MITライセンスです。ご自由にどうぞ。  
+Copyright (c) 2022 poosuke Released under the MIT license
+
+## その他
+### どうして作った？
+公式SDKがとても高度で使えそうになかったから。  
+なぜかどノーマルのTaskに対応してたり。
+
+### 名前の由来は？
+NCMBサービスを提供しているF社さんといえば、  
+某都銀の超巨大システムを担当されているそうなので、  
+そこからインスパイアしました。
