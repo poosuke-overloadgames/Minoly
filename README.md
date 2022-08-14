@@ -124,7 +124,7 @@ ObjectGetResult[] results = await UniTask.WhenAll(new[]
 //IProgress<float>, PlayerLoopTiming, CancellationTokenも指定できます。
 ObjectGetResult result = await dataStore.FetchAsync(className, objectId, progress, PlayerLoopTiming.Update, cancellationToken);
 ```
-Disposeの必要はありません。同時並行で取得できます。CanncelationToken等も渡せます。  
+Disposeの必要はありません。同時並行で取得できます。CancellationToken等も渡せます。  
 これらの特徴は他(MinolyDataStore.PostAsync,UpdateAsync,DeleteAsync,FindAsync)でも同じです。  
 UniTaskの詳細 : [Basics of UniTask and AsyncOperation](https://github.com/Cysharp/UniTask#basics-of-unitask-and-asyncoperation)
 
@@ -364,7 +364,7 @@ Bodyサンプル
 
 ### UniTaskによる取得
 ```
-ObjectFindResult result = await dataStore.FindAsync(lassName, new IQuery[] 
+ObjectFindResult result = await dataStore.FindAsync(className, new IQuery[] 
 { 
 	new QueryOrder("score", isAscend:false),
 	new QueryLimit(10)
