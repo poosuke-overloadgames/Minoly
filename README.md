@@ -302,7 +302,7 @@ ObjectDeleteResult result = await dataStore.DeleteAsync(className, objectId);
 //ObjectFinderを取得します。
 ObjectFinder finder = dataStore.CreateFinder();
 
-//score降順、10件で検索。完了まで待ちます。
+//第二引数でクエリを指定。詳細は後述。この例ではscore降順、10件で検索。完了まで待ちます。
 yield return finder.FindAsync(className, new IQuery[]
 {
 	new QueryOrder("score", isAscend:false),
@@ -370,3 +370,29 @@ ObjectFindResult result = await dataStore.FindAsync(lassName, new IQuery[]
 	new QueryLimit(10)
 });
 ```
+
+### クエリについて
+検索に必要なクエリを指定できます。
+ - QueryOrder
+   - 並び順を指定できます。
+   - コンストラクタでフィールド名、昇順・降順を指定します。
+ - QueryLimit
+   - 取得数を制限できます。QueryOrderと組み合わせて上位10レコード取得のようなこともできます。
+   - コンストラクタで取得数を指定します。
+   - 適切な値の指定をNCMBで推奨されています。[検索クエリについて](https://mbaas.nifcloud.com/doc/current/common/dev_guide.html#%E6%A4%9C%E7%B4%A2%E3%82%AF%E3%82%A8%E3%83%AA%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6)
+ - QuerySkip
+   - 指定数を読み飛ばします。
+   - コンストラクタでスキップ数を指定します。
+   - 一旦読み込んで返却する前に読み飛ばすので、大きくなるとパフォーマンスが劣化します。[検索クエリについて](https://mbaas.nifcloud.com/doc/current/common/dev_guide.html#%E6%A4%9C%E7%B4%A2%E3%82%AF%E3%82%A8%E3%83%AA%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6)
+ - QueryWhereEqualTo
+   - 指定したキー・値を一致するものを検索します。
+   - コンストラクタでキー・値を指定します。
+   - QueryWhereと同時に指定はできません。
+ - QueryWhere
+   - 検索条件をJsonで指定します。
+   - QueryWhere.CreateでIWhereConditionを指定できます(後述)
+   - QueryWhereEqualToと同時に指定できません。
+ - IQueryを実装することでクエリを作成できます。
+   - `Key`と`Value`がAPIパスのクエリパラメータにおけるキーと値になります。
+
+※ 同じ種類のクエリを同時に指定できません(QueryWhereとQueryWhereEqualToの組み合わせを含む)。MinolyDuplicateQueryExceptionを投げます。
