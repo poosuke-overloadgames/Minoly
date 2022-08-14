@@ -132,7 +132,7 @@ UniTaskの詳細 : [Basics of UniTask and AsyncOperation](https://github.com/Cys
 ### コルーチンで登録
 ```
 //ObjectPostmanを取得します。
-var postman = dataStore.CreatePostman();
+ObjectPostman postman = dataStore.CreatePostman();
 
 //取得できるまで待ちます。登録内容はJsonで指定します。
 yield return postman.PostAsync(className, "{\"userName\": \"aaa\", \"score\": 200}");
@@ -224,4 +224,43 @@ public void Register()
 ```
 //オブジェクトの登録
 ObjectPostResult result = await dataStore.PostAsync(className, "{\"userName\": \"bbb\", \"score\": 200}");
+```
+
+## オブジェクトの更新
+### コルーチンによる更新
+```
+//ObjectUpdaterを取得します。
+ObjectUpdater updater = dataStore.CreateUpdater();
+
+//更新できるまで待ちます。
+yield return updater.UpdateAsync(className, objectId, "{\"score\": 200}");
+
+//存在しないフィールドを指定すると、クラスに新しくフィールドが作られます。(NCMBの仕様)
+yield return updater.UpdateAsync(className, objectId, "{\"newField\": 334}");
+
+//結果を取得。
+ObjectUpdateResult result = updater.GetResult();
+
+//使い終わったらDisposeします。
+updater.Dispose();
+```
+
+### Jsonの形式について
+オブジェクト登録のものと同じです。  
+ただし、存在しないフィールドを指定すると、  
+クラスに新しくフィールドが作られる点にだけ注意してください。
+
+### ObjectUpdateResult
+| プロパティ       | 型                | 詳細                     |
+|----------------|-------------------|-------------------------|
+| Type           | RequestResultType | ObjectGetResultと同じ    |
+| HttpStatusCode | int               | 成功時は200              |
+| ErrorResponse  | ErrorResponse     | ObjectGetResultと同じ    |
+| UpdateDate     | DateTime          | 更新日時                 |
+
+[REST API リファレンス : オブジェクト更新 | ニフクラ mobile backend](https://mbaas.nifcloud.com/doc/current/rest/datastore/objectUpdate.html)
+
+### UniTaskによる更新
+```
+ObjectUpdateResult result = await dataStore.UpdateAsync(className, objectId, "{\"score\": 200}");
 ```
