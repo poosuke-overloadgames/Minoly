@@ -295,3 +295,78 @@ deleter.Dispose();
 ```
 ObjectDeleteResult result = await dataStore.DeleteAsync(className, objectId);
 ```
+
+## オブジェクトの検索
+### コルーチンによる検索
+```
+//ObjectFinderを取得します。
+ObjectFinder finder = dataStore.CreateFinder();
+
+//score降順、10件で検索。完了まで待ちます。
+yield return finder.FindAsync(className, new IQuery[]
+{
+	new QueryOrder("score", isAscend:false),
+	new QueryLimit(10)
+});
+
+//結果を取得。
+ObjectFindResult result = finder.GetResult();
+
+//使い終わったらDisposeします。
+finder.Dispose();
+```
+
+
+### ObjectFindResult
+| プロパティ       | 型                | 詳細                     |
+|----------------|-------------------|-------------------------|
+| Type           | RequestResultType | ObjectGetResult         |
+| HttpStatusCode | int               | 成功時は200              |
+| ErrorResponse  | ErrorResponse     | ObjectGetResult         |
+| Body           | string            | オブジェクトのJsonが入ります |
+
+Bodyサンプル
+```
+{
+  "results":[
+    {
+      "objectId":"8FgKqFlH8dZRDrBJ",
+      "createDate":"2013-08-09T07:37:54.869Z",
+      "updateDate":"2013-08-09T07:37:54.869Z",
+      "acl":{
+        "*":{
+          "read":true,
+          "write":true
+        }
+      },
+      "userName":"aaa",
+      "score":600
+    },
+    {
+      "objectId":"wMhDqUcnIam6QoaJ",
+      "createDate":"2013-08-09T07:40:55.108Z",
+      "updateDate":"2013-08-09T07:40:55.108Z",
+      "acl":{
+        "*":{
+          "read":true,
+          "write":true
+        }
+      },
+      "userName":"bbb",
+      "score":500
+    },
+    …
+  ]
+}
+```
+
+[REST API リファレンス : オブジェクト検索 | ニフクラ mobile backend](https://mbaas.nifcloud.com/doc/current/rest/datastore/objectSearch.html)
+
+### UniTaskによる取得
+```
+ObjectFindResult result = await dataStore.FindAsync(lassName, new IQuery[] 
+{ 
+	new QueryOrder("score", isAscend:false),
+	new QueryLimit(10)
+});
+```
