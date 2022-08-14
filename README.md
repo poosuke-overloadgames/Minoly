@@ -65,7 +65,7 @@ ObjectGetResult result = getter.GetResult();
 //使い終わったら忘れずにDisposeします。
 getter.Dispose();
 ```
- - ObjectGetterの使用制限<br>
+### ObjectGetterの使用制限
 繰り返し使用可能ですが、同時並行で取得させることはできません。例えば以下の場合は例外を投げます。
 ```
 var op1 = getter.FetchAsync(className, objectId1);
@@ -85,6 +85,32 @@ yield return op2;
 また、同一のObjectGetterを繰り返し使用した場合、GetResultは常に最新のものを返します。
 これら使用制限は他(ObjectPostman,ObjectUpdater,ObjectDeleter,ObjectFinder)でも同じです。
 
+### ObjectGetResult
+| プロパティ       | 型                | 詳細                     |
+|----------------|-------------------|-------------------------|
+| Type           | RequestResultType | 下記参照                 |
+| HttpStatusCode | int               | 成功時は200              |
+| ErrorResponse  | ErrorResponse     | 下記参照                 |
+| Body           | string            | オブジェクトのJsonが入ります |
+
+ - RequestResultType
+   - InProgress : 現在取得中(UniTaskによる取得ではこの値を返しません、UnityWebRequest.Result.InProgressに対応)
+   - Success : 取得成功
+   - NetworkError : 失敗、ネットワーク障害(UnityWebRequest.Result.NetworkErrorに対応)
+   - ProtocolError : 失敗、ステータスコードが200,201でない(UnityWebRequest.Result.ProtocolErrorに対応)
+   - DataError : 失敗、データフォーマットが無効(UnityWebRequest.Result.DataErrorに対応)
+   - Aborted : UniTaskのCancellationTokenでキャンセルを検知
+   - Unknown : その他、アクセス前にGetResultを取得等
+ - ErrorResponse
+   - code : NCMBからのエラーコード
+   - error : NCMBからのエラーメッセージ
+     - 詳細 : [REST API リファレンス : エラーコード一覧 | ニフクラ mobile backend](https://mbaas.nifcloud.com/doc/current/rest/common/error.html)
+   - 成功時はnullです。
+ - BodyのJson
+   - 例 : `{"objectId":"7FrmPTBKSNtVjajm","createDate":"2014-06-03T11:28:30.348Z","updateDate":"2014-06-03T11:28:30.348Z","acl":{"*":{"read":true,"write":true}},"testKey":"fugafuga"}`
+     - 詳細 : [REST API リファレンス : オブジェクト取得 | ニフクラ mobile backend](https://mbaas.nifcloud.com/doc/current/rest/datastore/objectGet.html)
+     - このTimestampはDateTime.Parseできます。
+
 ### UniTaskで取得
 ```
 //オブジェクトの取得
@@ -95,15 +121,18 @@ ObjectGetResult[] results = await UniTask.WhenAll(new[]
 	dataStore.FetchAsync(className, objectId1),
 	dataStore.FetchAsync(className, objectId2),
 });
+//IProgress<float>, PlayerLoopTiming, CancellationTokenも指定できます。
+ObjectGetResult result = await dataStore.FetchAsync(className, objectId, progress, PlayerLoopTiming.Update, cancellationToken);
 ```
-Disposeの必要はありません。同時並行で取得できます。<br>
-これらの特徴は他(ObjectPostman,ObjectUpdater,ObjectDeleter,ObjectFinder)でも同じです。
+Disposeの必要はありません。同時並行で取得できます。CancellationToken等も渡せます。  
+これらの特徴は他(MinolyDataStore.PostAsync,UpdateAsync,DeleteAsync,FindAsync)でも同じです。  
+UniTaskの詳細 : [Basics of UniTask and AsyncOperation](https://github.com/Cysharp/UniTask#basics-of-unitask-and-asyncoperation)
 
 ## オブジェクトの登録
 ### コルーチンで登録
 ```
 //ObjectPostmanを取得します。
-var postman = dataStore.CreatePostman();
+ObjectPostman postman = dataStore.CreatePostman();
 
 //取得できるまで待ちます。登録内容はJsonで指定します。
 yield return postman.PostAsync(className, "{\"userName\": \"aaa\", \"score\": 200}");
@@ -112,7 +141,7 @@ yield return postman.PostAsync(className, "{\"userName\": \"aaa\", \"score\": 20
 yield return postman.PostAsync("newClass", "{\"userName\": \"aaa\", \"score\": 200}");
 
 //取得結果・objectIdが入ります。
-var result = postman.GetResult(); 
+ObjectPostResult result = postman.GetResult(); 
 
 //使い終わったらDisposeします。
 postman.Dispose();
@@ -178,9 +207,268 @@ public void Register()
 }
 ```
 
+### ObjectPostResult
+| プロパティ       | 型                | 詳細                     |
+|----------------|-------------------|-------------------------|
+| Type           | RequestResultType | ObjectGetResultと同じ    |
+| HttpStatusCode | int               | 成功時は**201**           |
+| ErrorResponse  | ErrorResponse     | ObjectGetResultと同じ    |
+| ObjectId       | string            | 作成したObjectId         |
+| CreateDate     | DateTime          | 作成日時                 |
+
+[REST API リファレンス : オブジェクト登録 | ニフクラ mobile backend](https://mbaas.nifcloud.com/doc/current/rest/datastore/objectRegistration.html)
+
+
 
 ### UniTaskで登録
 ```
 //オブジェクトの登録
 ObjectPostResult result = await dataStore.PostAsync(className, "{\"userName\": \"bbb\", \"score\": 200}");
 ```
+
+## オブジェクトの更新
+### コルーチンによる更新
+```
+//ObjectUpdaterを取得します。
+ObjectUpdater updater = dataStore.CreateUpdater();
+
+//更新できるまで待ちます。
+yield return updater.UpdateAsync(className, objectId, "{\"score\": 200}");
+
+//存在しないフィールドを指定すると、クラスに新しくフィールドが作られます。(NCMBの仕様)
+yield return updater.UpdateAsync(className, objectId, "{\"newField\": 334}");
+
+//結果を取得。
+ObjectUpdateResult result = updater.GetResult();
+
+//使い終わったらDisposeします。
+updater.Dispose();
+```
+
+### Jsonの形式について
+オブジェクト登録のものと同じです。  
+ただし、存在しないフィールドを指定すると、  
+クラスに新しくフィールドが作られる点にだけ注意してください。
+
+### ObjectUpdateResult
+| プロパティ       | 型                | 詳細                     |
+|----------------|-------------------|-------------------------|
+| Type           | RequestResultType | ObjectGetResultと同じ    |
+| HttpStatusCode | int               | 成功時は200              |
+| ErrorResponse  | ErrorResponse     | ObjectGetResultと同じ    |
+| UpdateDate     | DateTime          | 更新日時                 |
+
+[REST API リファレンス : オブジェクト更新 | ニフクラ mobile backend](https://mbaas.nifcloud.com/doc/current/rest/datastore/objectUpdate.html)
+
+### UniTaskによる更新
+```
+ObjectUpdateResult result = await dataStore.UpdateAsync(className, objectId, "{\"score\": 200}");
+```
+
+## オブジェクトの削除
+### コルーチンによる削除
+```
+//ObjectDeleterを取得します。
+ObjectDeleter deleter = dataStore.CreateDeleter();
+
+//削除できるまで待ちます。
+yield return deleter.DeleteAsync(className, objectId);
+
+//結果を取得。
+ObjectDeleteResult result = deleter.GetResult();
+
+//使い終わったらDisposeします。
+deleter.Dispose();
+```
+
+
+### ObjectDeleteResult
+| プロパティ       | 型                | 詳細                     |
+|----------------|-------------------|-------------------------|
+| Type           | RequestResultType | ObjectGetResultと同じ    |
+| HttpStatusCode | int               | 成功時は200              |
+| ErrorResponse  | ErrorResponse     | ObjectGetResultと同じ    |
+
+[REST API リファレンス : オブジェクト削除 | ニフクラ mobile backend](https://mbaas.nifcloud.com/doc/current/rest/datastore/objectDelete.html)
+
+### UniTaskによる削除
+```
+ObjectDeleteResult result = await dataStore.DeleteAsync(className, objectId);
+```
+
+## オブジェクトの検索
+### コルーチンによる検索
+```
+//ObjectFinderを取得します。
+ObjectFinder finder = dataStore.CreateFinder();
+
+//第二引数でクエリを指定。詳細は後述。この例ではscore降順、10件で検索。完了まで待ちます。
+yield return finder.FindAsync(className, new IQuery[]
+{
+	new QueryOrder("score", isAscend:false),
+	new QueryLimit(10)
+});
+
+//結果を取得。
+ObjectFindResult result = finder.GetResult();
+
+//使い終わったらDisposeします。
+finder.Dispose();
+```
+
+
+### ObjectFindResult
+| プロパティ       | 型                | 詳細                     |
+|----------------|-------------------|-------------------------|
+| Type           | RequestResultType | ObjectGetResultと同じ    |
+| HttpStatusCode | int               | 成功時は200              |
+| ErrorResponse  | ErrorResponse     | ObjectGetResultと同じ    |
+| Body           | string            | オブジェクトのJsonが入ります |
+
+Bodyサンプル
+```
+{
+  "results":[
+    {
+      "objectId":"8FgKqFlH8dZRDrBJ",
+      "createDate":"2013-08-09T07:37:54.869Z",
+      "updateDate":"2013-08-09T07:37:54.869Z",
+      "acl":{
+        "*":{
+          "read":true,
+          "write":true
+        }
+      },
+      "userName":"aaa",
+      "score":600
+    },
+    {
+      "objectId":"wMhDqUcnIam6QoaJ",
+      "createDate":"2013-08-09T07:40:55.108Z",
+      "updateDate":"2013-08-09T07:40:55.108Z",
+      "acl":{
+        "*":{
+          "read":true,
+          "write":true
+        }
+      },
+      "userName":"bbb",
+      "score":500
+    },
+    …
+  ]
+}
+```
+
+[REST API リファレンス : オブジェクト検索 | ニフクラ mobile backend](https://mbaas.nifcloud.com/doc/current/rest/datastore/objectSearch.html)
+
+### UniTaskによる取得
+```
+ObjectFindResult result = await dataStore.FindAsync(className, new IQuery[] 
+{ 
+	new QueryOrder("score", isAscend:false),
+	new QueryLimit(10)
+});
+```
+
+### クエリについて
+検索に必要なクエリを指定できます。
+ - QueryOrder
+   - 並び順を指定できます。
+   - コンストラクタでフィールド名、昇順・降順を指定します。
+ - QueryLimit
+   - 取得数を制限できます。QueryOrderと組み合わせて上位10レコード取得のようなこともできます。
+   - コンストラクタで取得数を指定します。
+   - 適切な値の指定をNCMBで推奨されています。[検索クエリについて](https://mbaas.nifcloud.com/doc/current/common/dev_guide.html#%E6%A4%9C%E7%B4%A2%E3%82%AF%E3%82%A8%E3%83%AA%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6)
+ - QuerySkip
+   - 指定数を読み飛ばします。
+   - コンストラクタでスキップ数を指定します。
+   - 一旦読み込んで返却する前に読み飛ばすので、大きくなるとパフォーマンスが劣化します。[検索クエリについて](https://mbaas.nifcloud.com/doc/current/common/dev_guide.html#%E6%A4%9C%E7%B4%A2%E3%82%AF%E3%82%A8%E3%83%AA%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6)
+ - QueryWhereEqualTo
+   - 指定したキー・値を一致するものを検索します。
+   - コンストラクタでキー・値を指定します。
+   - QueryWhereと同時に指定はできません。
+ - QueryWhere
+   - 検索条件をJsonで指定します。[REST API リファレンス : オブジェクト検索 | ニフクラ mobile backend](https://mbaas.nifcloud.com/doc/current/rest/datastore/objectSearch.html)
+   - QueryWhere.Createで検索条件を指定できます(後述)
+   - QueryWhereEqualToと同時に指定できません。
+ - IQueryを実装することでクエリを作成できます。
+   - `Key`と`Value`がAPIパスのクエリパラメータにおけるキーと値になります。
+
+※ 同じ種類のクエリを同時に指定できません(QueryWhereとQueryWhereEqualToの組み合わせを含む)。MinolyDuplicateQueryExceptionを投げます。
+
+### QueryWhere.Createで指定できる検索条件
+ - WhereEqualTo
+   - フィールドの値と一致する条件を指定します。
+   - `QueryWhereEqualTo("name","aaa")`は`QueryWhere.Create(new WhereEqualTo("name","aaa"))`の省略形です。
+ - WhereNotEqualTo
+   - フィールドの値と一致**しない**条件を指定します。
+ - WhereGreaterThan
+   - フィールドの値より大きい条件を指定します。
+   - 一致する値を含むかどうかも指定できます。
+ - WhereLessThan
+   - フィールドの値より小さい条件を指定します。
+   - 一致する値を含むかどうかも指定できます。
+ - WhereInRange
+   - フィールドの値の範囲に含む条件を指定します。
+   - 一致する値を含むかどうかも指定できます。
+   - この代わりにWhereAndでWhereGreaterThanとWhereLessThanを使う等、同一フィールドの条件を含めることはできません。[検索クエリについて](https://mbaas.nifcloud.com/doc/current/common/dev_guide.html#%E6%A4%9C%E7%B4%A2%E3%82%AF%E3%82%A8%E3%83%AA%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6)
+ - WhereAnyOf
+   - フィールドのいずれかの値を含む条件を指定できます。
+ - WhereNotAnyOf
+   - フィールドのいずれかの値も含まない条件を指定できます。
+ - WhereAnd
+   - And条件を指定します。
+   - コンストラクタでさらに検索条件を2つ以上指定します。
+ - WhereOr
+   - Or条件を指定します。
+   - コンストラクタでさらに検索条件を2つ以上指定します。
+
+例
+```
+//scoreが100以上
+IWhereCondition condition = new WhereGreaterThan("score", 100);
+
+//nameがaaa,bbb,cccのいずれか
+IWhereCondition condition = new WhereAnyOf("name", new[] { "aaa", "bbb", "ccc" });
+
+//nameがaaa、かつdateTimeが2022/8/1以降
+IWhereCondition condition = new WhereAnd(new IWhereCondition[]
+{
+	new WhereEqualTo("name", "aaa"),
+	new WhereGreaterThan("dateTime", new DateTime(2022, 8, 1))
+});
+```
+
+## 例外
+全てMinolyExceptionを継承します。
+ - MinolyInProgressException
+   - ObjectGetter等で取得処理中に再度取得を行おうとするとthrowします。
+ - MinolyDuplicateQueryExeption
+   - ObjectFinder.FindAsyncでキー名が同じIQueryを2つ以上指定するとthrowします。
+
+## テストを動かしたいんだけど？
+ 1. NCMBのアカウントを作ります。
+ 2. 任意の名前でアプリケーションを作成します。
+ 3. `TestClass`というクラスを作ります。
+ 4. `userName`,`score`,`dateTime`というフィールドを作ります。
+ 5. UnityのTool > MinolyKeySettingでアプリケーションキーとクライアントキーを保存します。  
+    (EditorUserSettings環境下に保存されるのでgit管理対象にならず安全です) 
+
+## 使用環境
+Unity 2018.4以降で動くと思います。  
+開発環境は2020.3です。
+
+## 使用条件
+MITライセンスです。ご自由にどうぞ。  
+Copyright (c) 2022 poosuke Released under the MIT license
+
+## その他
+### どうして作った？
+公式SDKがとても高度で使えそうになかったから。  
+なぜかどノーマルのTaskに対応してたり。
+
+### 名前の由来は？
+NCMBサービスを提供しているF社さんといえば、  
+某都銀の超巨大システムを担当されているそうなので、  
+そこからインスパイアしました。
