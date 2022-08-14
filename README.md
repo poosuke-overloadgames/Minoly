@@ -109,6 +109,7 @@ yield return op2;
  - BodyのJson
    - 例 : `{"objectId":"7FrmPTBKSNtVjajm","createDate":"2014-06-03T11:28:30.348Z","updateDate":"2014-06-03T11:28:30.348Z","acl":{"*":{"read":true,"write":true}},"testKey":"fugafuga"}`
      - 詳細 : [REST API リファレンス : オブジェクト取得 | ニフクラ mobile backend](https://mbaas.nifcloud.com/doc/current/rest/datastore/objectGet.html)
+     - このTimestampはDateTime.Parseできます。
 
 ### UniTaskで取得
 ```
@@ -140,7 +141,7 @@ yield return postman.PostAsync(className, "{\"userName\": \"aaa\", \"score\": 20
 yield return postman.PostAsync("newClass", "{\"userName\": \"aaa\", \"score\": 200}");
 
 //取得結果・objectIdが入ります。
-var result = postman.GetResult(); 
+ObjectPostResult result = postman.GetResult(); 
 
 //使い終わったらDisposeします。
 postman.Dispose();
@@ -205,6 +206,18 @@ public void Register()
 	//{"userName":"a\"","score":100,"dateTime":{"__type":"Date","iso":"2022-08-01T00:00:00.000Z"}}
 }
 ```
+
+### ObjectPostResult
+| プロパティ       | 型                | 詳細                     |
+|----------------|-------------------|-------------------------|
+| Type           | RequestResultType | ObjectGetResultと同じ    |
+| HttpStatusCode | int               | 成功時は**201**           |
+| ErrorResponse  | ErrorResponse     | ObjectGetResultと同じ    |
+| ObjectId       | string            | 作成したObjectId         |
+| CreateDate     | DateTime          | 作成日時                 |
+
+[REST API リファレンス : オブジェクト登録 | ニフクラ mobile backend](https://mbaas.nifcloud.com/doc/current/rest/datastore/objectRegistration.html)
+
 
 
 ### UniTaskで登録
