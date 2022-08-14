@@ -125,7 +125,7 @@ ObjectGetResult[] results = await UniTask.WhenAll(new[]
 ObjectGetResult result = await dataStore.FetchAsync(className, objectId, progress, PlayerLoopTiming.Update, cancellationToken);
 ```
 Disposeの必要はありません。同時並行で取得できます。CanncelationToken等も渡せます。  
-これらの特徴は他(ObjectPostman,ObjectUpdater,ObjectDeleter,ObjectFinder)でも同じです。  
+これらの特徴は他(MinolyDataStore.PostAsync,UpdateAsync,DeleteAsync,FindAsync)でも同じです。  
 UniTaskの詳細 : [Basics of UniTask and AsyncOperation](https://github.com/Cysharp/UniTask#basics-of-unitask-and-asyncoperation)
 
 ## オブジェクトの登録
@@ -263,4 +263,35 @@ updater.Dispose();
 ### UniTaskによる更新
 ```
 ObjectUpdateResult result = await dataStore.UpdateAsync(className, objectId, "{\"score\": 200}");
+```
+
+## オブジェクトの削除
+### コルーチンによる削除
+```
+//ObjectDeleterを取得します。
+ObjectDeleter deleter = dataStore.CreateDeleter();
+
+//削除できるまで待ちます。
+yield return deleter.DeleteAsync(className, objectId);
+
+//結果を取得。
+ObjectDeleteResult result = deleter.GetResult();
+
+//使い終わったらDisposeします。
+deleter.Dispose();
+```
+
+
+### ObjectDeleteResult
+| プロパティ       | 型                | 詳細                     |
+|----------------|-------------------|-------------------------|
+| Type           | RequestResultType | ObjectGetResultと同じ    |
+| HttpStatusCode | int               | 成功時は200              |
+| ErrorResponse  | ErrorResponse     | ObjectGetResultと同じ    |
+
+[REST API リファレンス : オブジェクト削除 | ニフクラ mobile backend](https://mbaas.nifcloud.com/doc/current/rest/datastore/objectDelete.html)
+
+### UniTaskによる削除
+```
+ObjectDeleteResult result = await dataStore.DeleteAsync(className, objectId);
 ```
