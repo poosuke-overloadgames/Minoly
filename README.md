@@ -65,7 +65,7 @@ ObjectGetResult result = getter.GetResult();
 //使い終わったら忘れずにDisposeします。
 getter.Dispose();
 ```
- - ObjectGetterの使用制限<br>
+### ObjectGetterの使用制限
 繰り返し使用可能ですが、同時並行で取得させることはできません。例えば以下の場合は例外を投げます。
 ```
 var op1 = getter.FetchAsync(className, objectId1);
@@ -85,6 +85,31 @@ yield return op2;
 また、同一のObjectGetterを繰り返し使用した場合、GetResultは常に最新のものを返します。
 これら使用制限は他(ObjectPostman,ObjectUpdater,ObjectDeleter,ObjectFinder)でも同じです。
 
+### ObjectGetResult
+| プロパティ       | 型                | 詳細                     |
+|----------------|-------------------|-------------------------|
+| Type           | RequestResultType | 下記参照                 |
+| HttpStatusCode | int               | 成功時は200              |
+| ErrorResponse  | ErrorResponse     | 下記参照                 |
+| Body           | string            | オブジェクトのJsonが入ります |
+
+ - RequestResultType
+   - InProgress : 現在取得中(UniTaskによる取得ではこの値を返しません、UnityWebRequest.Result.InProgressに対応)
+   - Success : 取得成功
+   - NetworkError : 失敗、ネットワーク障害(UnityWebRequest.Result.NetworkErrorに対応)
+   - ProtocolError : 失敗、ステータスコードが200,201でない(UnityWebRequest.Result.ProtocolErrorに対応)
+   - DataError : 失敗、データフォーマットが無効(UnityWebRequest.Result.DataErrorに対応)
+   - Aborted : UniTaskのCancellationTokenでキャンセルを検知
+   - Unknown : その他、アクセス前にGetResultを取得等
+ - ErrorResponse
+   - code : NCMBからのエラーコード
+   - error : NCMBからのエラーメッセージ
+     - 詳細 : [REST API リファレンス : エラーコード一覧 | ニフクラ mobile backend](https://mbaas.nifcloud.com/doc/current/rest/common/error.html)
+   - 成功時はnullです。
+ - BodyのJson
+   - 例 : `{"objectId":"7FrmPTBKSNtVjajm","createDate":"2014-06-03T11:28:30.348Z","updateDate":"2014-06-03T11:28:30.348Z","acl":{"*":{"read":true,"write":true}},"testKey":"fugafuga"}`
+     - 詳細 : [REST API リファレンス : オブジェクト取得 | ニフクラ mobile backend](https://mbaas.nifcloud.com/doc/current/rest/datastore/objectGet.html)
+
 ### UniTaskで取得
 ```
 //オブジェクトの取得
@@ -95,9 +120,12 @@ ObjectGetResult[] results = await UniTask.WhenAll(new[]
 	dataStore.FetchAsync(className, objectId1),
 	dataStore.FetchAsync(className, objectId2),
 });
+//IProgress<float>, PlayerLoopTiming, CancellationTokenも指定できます。
+ObjectGetResult result = await dataStore.FetchAsync(className, objectId, progress, PlayerLoopTiming.Update, cancellationToken);
 ```
-Disposeの必要はありません。同時並行で取得できます。<br>
-これらの特徴は他(ObjectPostman,ObjectUpdater,ObjectDeleter,ObjectFinder)でも同じです。
+Disposeの必要はありません。同時並行で取得できます。CanncelationToken等も渡せます。  
+これらの特徴は他(ObjectPostman,ObjectUpdater,ObjectDeleter,ObjectFinder)でも同じです。  
+UniTaskの詳細 : [Basics of UniTask and AsyncOperation](https://github.com/Cysharp/UniTask#basics-of-unitask-and-asyncoperation)
 
 ## オブジェクトの登録
 ### コルーチンで登録
